@@ -2,11 +2,11 @@
 
 ## What is Kubernetes?
 
-Kubernetes (often abbreviated as **K8s**) is an open-source platform for automating the deployment, scaling, and management of containerized applications. Originally developed by Google and released in 2014, it is now maintained by the Cloud Native Computing Foundation (CNCF).
+Kubernetes is an open-source platform for automating the deployment, scaling, and management of containerized applications. Originally developed by Google and released in 2014, it is now maintained by the Cloud Native Computing Foundation (CNCF).
 
 ---
 
-## A brief history: from bare metal to orchestration
+## A brief history about Kubernetes
 
 Understanding why Kubernetes exists requires a look at how software deployment has evolved:
 
@@ -14,7 +14,7 @@ Understanding why Kubernetes exists requires a look at how software deployment h
 
 2. **Virtual machines (VMs)** — Hypervisors (VMware, KVM) allowed multiple isolated OS instances on a single machine. Better utilization, but VMs are heavy: each one runs a full OS kernel.
 
-3. **Containers** — Docker (2013) popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network.
+3. **Containers** — Docker popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network.
 
 4. **Container orchestration** — Running one container manually is easy. Running hundreds across multiple machines, with load balancing, health checks, and rolling updates, is not. This is the problem Kubernetes solves.
 
@@ -39,7 +39,7 @@ A Kubernetes **cluster** is the top-level unit. It consists of a set of machines
 
 ### Node
 
-A **node** is a single machine (VM or physical server) in the cluster. There are two types:
+A **node** is a single machine (VM or physical server) in the cluster. There are two types of node:
 
 - **Control plane node** — manages the cluster state and makes scheduling decisions.
 - **Worker node** — runs the actual application workloads.
@@ -52,7 +52,7 @@ A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more co
 - The same storage volumes
 - The same lifecycle
 
-In practice, most Pods contain a single container. Multi-container Pods are used for tightly coupled helpers (e.g., a log shipper alongside the main app).
+In practice, most Pods contain a single container while multi-container Pods are used for tightly coupled helpers.
 
 ```yaml
 # Example: a simple single-container Pod
@@ -94,7 +94,7 @@ The control plane is the brain of the cluster. It maintains the desired state of
 
 ### The reconciliation loop
 
-Kubernetes is declarative: you describe the **desired state** (e.g., "I want 3 replicas of this app"), and the control plane continuously works to match the **actual state** to it. This loop is the foundation of Kubernetes' self-healing behavior.
+Kubernetes is declarative: you describe the **desired state**, and the control plane continuously works to match the **actual state** to it. This loop is the foundation of Kubernetes' self-healing behavior.
 
 ```
 Desired state  →  kube-apiserver  →  etcd
@@ -114,7 +114,7 @@ Each worker node runs the following components:
 |---|---|
 | `kubelet` | Agent that communicates with the control plane. Ensures containers described in PodSpecs are running and healthy. |
 | `kube-proxy` | Manages network rules on the node. Enables communication to/from Pods. |
-| Container runtime | Actually runs the containers (e.g., `containerd`, `CRI-O`). Docker was historically common but is no longer directly supported. |
+| Container runtime | Actually runs the containers (e.g., `containerd`). Docker was historically common but is no longer directly supported. |
 
 ---
 
