@@ -2,7 +2,7 @@
 
 ## What is Kubernetes?
 
-Kubernetes is an open-source platform for automating the deployment, scaling, and management of containerized applications. Originally developed by Google and released in 2014, it is now maintained by the Cloud Native Computing Foundation (CNCF).
+Kubernetes is an open-source platform for automating the deployment, scaling, and management of containerized applications. It was originally developed by Google and released in 2014 and it is now maintained by the Cloud Native Computing Foundation (CNCF).
 
 ---
 
@@ -10,13 +10,13 @@ Kubernetes is an open-source platform for automating the deployment, scaling, an
 
 Understanding why Kubernetes exists requires a look at how software deployment has evolved:
 
-1. **Bare metal era** — Applications ran directly on physical servers. Scaling meant buying new hardware. Isolation between applications was minimal.
+1. **Bare metal era**: applications ran directly on physical servers. Scaling meant buying new hardware. Isolation between applications was minimal;
 
-2. **Virtual machines (VMs)** — Hypervisors (VMware, KVM) allowed multiple isolated OS instances on a single machine. Better utilization, but VMs are heavy: each one runs a full OS kernel.
+2. **Virtual machines (VMs)**: Hypervisors (VMware, KVM) allowed multiple isolated OS instances on a single machine. Better utilization, but VMs are heavy: each one runs a full OS kernel;
 
-3. **Containers** — Docker popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network.
+3. **Containers**: Docker popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network;
 
-4. **Container orchestration** — Running one container manually is easy. Running hundreds across multiple machines, with load balancing, health checks, and rolling updates, is not. This is the problem Kubernetes solves.
+4. **Container orchestration**: running one container manually is easy. Running hundreds across multiple machines, with load balancing, health checks, and rolling updates, is not. This is the problem Kubernetes solves;
 
 ---
 
@@ -41,16 +41,16 @@ A Kubernetes **cluster** is the top-level unit. It consists of a set of machines
 
 A **node** is a single machine (VM or physical server) in the cluster. There are two types of node:
 
-- **Control plane node** — manages the cluster state and makes scheduling decisions.
-- **Worker node** — runs the actual application workloads.
+- **Control plane node** manages the cluster state and makes scheduling decisions;
+- **Worker node** runs the actual application workloads;
 
 ### Pod
 
 A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more containers that share:
 
-- The same network namespace (same IP address)
-- The same storage volumes
-- The same lifecycle
+- The same network namespace (same IP address);
+- The same storage volumes;
+- The same lifecycle;
 
 In practice, most Pods contain a single container while multi-container Pods are used for tightly coupled helpers.
 
@@ -87,10 +87,10 @@ The control plane is the brain of the cluster. It maintains the desired state of
 
 | Component | Role |
 |---|---|
-| `kube-apiserver` | Exposes the Kubernetes API. All communication goes through here. |
-| `etcd` | Distributed key-value store. Holds the entire cluster state. |
-| `kube-scheduler` | Assigns Pods to nodes based on resource availability and constraints. |
-| `kube-controller-manager` | Runs controllers that reconcile actual state with desired state (e.g., ensures 3 replicas are always running). |
+| `kube-apiserver` | It exposes the Kubernetes API; all communication go through here |
+| `etcd` | It's a distributed key-value store which holds the entire cluster state |
+| `kube-scheduler` | It assigns Pods to nodes based on resource availability and constraints |
+| `kube-controller-manager` | It runs controllers that reconcile actual state with desired state |
 
 ### The reconciliation loop
 
@@ -112,9 +112,9 @@ Each worker node runs the following components:
 
 | Component | Role |
 |---|---|
-| `kubelet` | Agent that communicates with the control plane. Ensures containers described in PodSpecs are running and healthy. |
-| `kube-proxy` | Manages network rules on the node. Enables communication to/from Pods. |
-| Container runtime | Actually runs the containers (e.g., `containerd`). Docker was historically common but is no longer directly supported. |
+| `kubelet` | It's an agent that communicates with the control plane and ensures containers described in PodSpecs are running and healthy |
+| `kube-proxy` | It manages network rules on the node and enables communication to/from Pods |
+| Container runtime | It actually runs the containers (e.g., `containerd`). Docker was historically common but is no longer directly supported |
 
 ---
 
@@ -219,12 +219,12 @@ kubectl delete -f deployment.yaml
 
 Kubernetes solves the problem of running containerized applications at scale across multiple machines. Its key ideas are:
 
-- **Declarative configuration** — you describe what you want, Kubernetes figures out how to achieve it.
-- **Self-healing** — if a Pod crashes or a node fails, Kubernetes automatically reschedules workloads.
-- **Horizontal scaling** — adding replicas is a one-line change.
-- **Portability** — the same manifests work on any Kubernetes cluster, regardless of the underlying infrastructure.
+- **Declarative configuration**: you describe what you want, Kubernetes figures out how to achieve it;
+- **Self-healing**: if a Pod crashes or a node fails, Kubernetes automatically reschedules workloads;
+- **Horizontal scaling**: adding replicas is a one-line change;
+- **Portability**: the same manifests work on any Kubernetes cluster, regardless of the underlying infrastructure;
 
-These properties made Kubernetes the standard for cloud-native deployments — and the foundation on which KubeEdge extends orchestration to the edge.
+These properties made Kubernetes the standard for cloud-native deployments and the foundation on which KubeEdge extends orchestration to the edge.
 
 ---
 
