@@ -6,17 +6,17 @@ Kubernetes is an open-source platform for automating the deployment, scaling, an
 
 ---
 
-## A brief history about Kubernetes
+## Some history about Kubernetes
 
 Understanding why Kubernetes exists requires a look at how software deployment has evolved:
 
-1. **Bare metal era**: applications ran directly on physical servers. Scaling meant buying new hardware. Isolation between applications was minimal;
+1. **Bare metal era**: applications ran directly on physical servers, scaling required buying new hardware and isolation between applications was minimal;
 
-2. **Virtual machines (VMs)**: Hypervisors (VMware, KVM) allowed multiple isolated OS instances on a single machine. Better utilization, but VMs are heavy: each one runs a full OS kernel;
+2. **Virtual machines (VMs)**: Hypervisors (VMware, KVM) allowed multiple isolated OS instances on a single machine improving utilization. The problem with VMs is that they are heavy: each one runs a full OS kernel;
 
 3. **Containers**: Docker popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network;
 
-4. **Container orchestration**: running one container manually is easy. Running hundreds across multiple machines, with load balancing, health checks, and rolling updates, is not. This is the problem Kubernetes solves;
+4. **Container orchestration**: this is the problem that Kubernetes solves, because running hundreds of containers across multiple machines, with load balancing, health checks, and rolling updates, isn't easy;
 
 ---
 
@@ -24,7 +24,7 @@ Understanding why Kubernetes exists requires a look at how software deployment h
 
 ### Cluster
 
-A Kubernetes **cluster** is the top-level unit. It consists of a set of machines (physical or virtual) that collectively run containerized workloads.
+A Kubernetes **cluster** is the top-level unit which consists of a set of machines (physical or virtual) that collectively run containerized workloads.
 
 ```
 +---------------------------+
@@ -46,12 +46,7 @@ A **node** is a single machine (VM or physical server) in the cluster. There are
 
 ### Pod
 
-A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more containers that share:
-
-- The same network namespace (same IP address);
-- The same storage volumes;
-- The same lifecycle;
-
+A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more containers that share: the same network namespace (same IP address), the same storage volumes and the same lifecycle;
 In practice, most Pods contain a single container while multi-container Pods are used for tightly coupled helpers.
 
 ```yaml
@@ -72,7 +67,7 @@ spec:
 
 ### Namespace
 
-A **Namespace** is a logical partition within a cluster. It allows multiple teams or projects to share the same cluster while keeping their resources isolated.
+A **Namespace** is a logical partition within a cluster that allows multiple teams or projects to share the same cluster while keeping their resources isolated.
 
 ```bash
 kubectl get pods --namespace=production
@@ -83,7 +78,7 @@ kubectl get pods -n development
 
 ## The control plane
 
-The control plane is the brain of the cluster. It maintains the desired state of the system and reacts to changes.
+The control plane is the brain of the cluster: it maintains the desired state of the system and reacts to changes.
 
 | Component | Role |
 |---|---|
@@ -148,7 +143,7 @@ spec:
 
 ### Service
 
-Pods are ephemeral — they can be created and destroyed at any time, and their IP addresses change. A **Service** provides a stable network endpoint to reach a set of Pods.
+Pods are ephemeral: it means that they can be created and destroyed at any time, and their IP addresses change. A **Service** provides a stable network endpoint to reach a set of Pods.
 
 ```yaml
 apiVersion: v1
@@ -165,14 +160,14 @@ spec:
 ```
 
 Service types:
-- `ClusterIP` — accessible only within the cluster (default)
-- `NodePort` — exposes the service on a static port on each node
-- `LoadBalancer` — provisions an external load balancer (cloud providers)
+- `ClusterIP` is accessible only within the cluster (default);
+- `NodePort` exposes the service on a static port on each node;
+- `LoadBalancer` provisions an external load balancer (cloud providers);
 
 ### ConfigMap and Secret
 
-- **ConfigMap** — stores non-sensitive configuration data as key-value pairs (e.g., environment variables, config files).
-- **Secret** — stores sensitive data (passwords, tokens, TLS certificates) in base64-encoded form.
+- **ConfigMap** stores non-sensitive configuration data as key-value pairs (e.g., environment variables, config files);
+- **Secret** stores sensitive data (passwords, tokens, TLS certificates) in base64-encoded form;
 
 ```yaml
 apiVersion: v1
