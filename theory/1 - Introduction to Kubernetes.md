@@ -46,7 +46,7 @@ A **node** is a single machine (VM or physical server) in the cluster. There are
 
 ### Pod
 
-A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more containers that share: the same network namespace (same IP address), the same storage volumes and the same lifecycle;
+A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more containers that share: the same network namespace (same IP address), the same storage volumes and the same lifecycle.
 In practice, most Pods contain a single container while multi-container Pods are used for tightly coupled helpers.
 
 ```yaml
@@ -117,7 +117,7 @@ Each worker node runs the following components:
 
 ### Deployment
 
-A **Deployment** manages a set of identical Pods (replicas). It handles rolling updates and rollbacks automatically.
+A **Deployment** manages a set of identical Pods (replicas) and handles rolling updates and rollbacks automatically.
 
 ```yaml
 apiVersion: apps/v1
