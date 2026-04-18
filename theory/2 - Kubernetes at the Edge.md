@@ -64,7 +64,7 @@ This is the opposite of what an edge system needs: a node that is temporarily of
 
 ### Resource requirements
 
-A standard Kubernetes worker node runs several system components (`kubelet`, `kube-proxy`, container runtime, CNI plugins) that together consume a non-trivial amount of memory and CPU. This is acceptable on a cloud VM with 4+ cores and 8 GB of RAM.
+A standard Kubernetes worker node runs several system components (`kubelet`, `kube-proxy`, container runtime, CNI plugins) that together consume a large amount of memory and CPU.
 
 Edge devices, however, may have severely constrained resources:
 
