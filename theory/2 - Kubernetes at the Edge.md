@@ -4,7 +4,7 @@
 
 **Edge computing** is a distributed computing paradigm that brings computation and data storage closer to the sources of data, rather than relying on a centralized cloud datacenter.
 
-The "edge" refers to the boundary between the physical world and the digital infrastructure — it includes devices such as: industrial sensors and actuators on factory floors, cameras and vision systems for real-time analysis, IoT gateways in smart buildings or cities and many more.
+The "edge" refers to the boundary between the physical world and the digital infrastructure, it includes devices such as: industrial sensors and actuators, cameras and vision systems for real-time analysis, IoT gateways in smart buildings or cities and many more.
 
 ```
         [ Cloud Datacenter ]
