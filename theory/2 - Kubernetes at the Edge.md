@@ -18,9 +18,9 @@ The edge sits between the raw devices and the cloud, processing data locally and
 
 ---
 
-## Why not just use the cloud?
+## Why the cloud isn't enough?
 
-Cloud computing offers virtually unlimited resources and a mature ecosystem. However, several fundamental constraints make it unsuitable as the sole infrastructure for edge scenarios.
+Cloud computing offers virtually unlimited resources; however, several fundamental constraints make it unsuitable as the only infrastructure for edge scenarios.
 
 ### Latency
 
@@ -34,13 +34,13 @@ Network round-trips to a cloud datacenter typically take **50–200ms**. For man
 | Autonomous vehicles | < 5ms |
 | Robotic surgery | < 1ms |
 
-When a robotic arm on a factory floor needs to react to a sensor reading, waiting for a cloud response is not an option. The decision must happen locally.
+When a robotic arm on a factory floor needs to react to a sensor reading, waiting for a cloud response simply isn't possible: the decision must happen locally.
 
 ### Bandwidth
 
 Modern edge deployments generate enormous volumes of raw data. A single high-resolution industrial camera can produce **1–5 GB/s** of uncompressed video. Sending all of this to the cloud is economically and technically unfeasible.
 
-Edge nodes filter, compress, and analyze data locally, sending only structured results (e.g., "anomaly detected at position X") to the cloud rather than raw streams.
+Edge nodes filter, compress, and analyze data locally, sending only structured results to the cloud rather than raw streams.
 
 ### Data sovereignty and privacy
 
@@ -64,22 +64,21 @@ This is the opposite of what an edge system needs: a node that is temporarily of
 
 ### Resource requirements
 
-A standard Kubernetes worker node runs several system components (`kubelet`, `kube-proxy`, container runtime, CNI plugins) that together consume a large amount of memory and CPU.
+A standard Kubernetes worker node runs several system components (`kubelet`, `kube-proxy`, container runtime) that together consume a large amount of memory and CPU.
 
 Edge devices, however, may have severely constrained resources:
 
 | Device type | Typical RAM | Typical CPU |
 |---|---|---|
-| Cloud VM (standard) | 8–64 GB | 4–32 cores |
+| Cloud VM | 8–64 GB | 4–32 cores |
 | Edge gateway | 2–8 GB | 2–4 cores |
-| Raspberry Pi 4 | 1–8 GB | 4 cores (ARM) |
 | Industrial microcontroller | 256 MB | 1 core |
 
 A full Kubernetes node simply cannot run on many of these devices.
 
 ### No native IoT device management
 
-Kubernetes manages containers — it has no concept of physical devices such as temperature sensors, motors, or cameras. There is no native mechanism to represent device state, push configuration to hardware, or react to device telemetry within the Kubernetes object model.
+Kubernetes manages containers: it has no concept of physical devices such as sensors or cameras. There is no native mechanism to represent device state, push configuration to hardware or react to device telemetry within the Kubernetes object model.
 
 ### Network topology assumptions
 
@@ -97,7 +96,7 @@ Given these constraints, a Kubernetes-based edge orchestration system must satis
 
 1. **Offline autonomy**: Edge nodes must continue running scheduled workloads even when disconnected from the control plane. State must be cached locally;
 
-2. **Lightweight footprint**: the edge agent must run on resource-constrained hardware (ARM processors, limited RAM);
+2. **Lightweight footprint**: the edge agent must run on resource-constrained hardware;
 
 3. **Device management**: the system must provide a native way to represent, configure, and monitor physical IoT devices alongside containerized workloads;
 
@@ -120,7 +119,7 @@ Several projects have emerged to extend Kubernetes toward edge environments, eac
 | **MicroK8s** | Minimal K8s by Canonical, easy install | Developer environments, small edge clusters |
 | **OpenYurt** | Adds edge autonomy on top of standard K8s | Geographically distributed edge nodes |
 
-These tools are not mutually exclusive. A common pattern is to use K3s as the cloud-side cluster and KubeEdge to extend it with edge-specific capabilities — combining the simplicity of K3s with the IoT management features of KubeEdge.
+These tools are not mutually exclusive: in fact, a common pattern is to use K3s as the cloud-side cluster and KubeEdge to extend it with edge-specific capabilities.
 
 ---
 
@@ -130,9 +129,7 @@ Modern systems rarely place all logic at one extreme. Instead, they distribute c
 
 ```
 [ IoT Device ]  →  [ Edge Node ]  →  [ Regional Fog ]  →  [ Cloud ]
-  Raw sensing       Local inference    Aggregation          Storage
-  Actuation         Filtering          Analytics            ML training
-  < 1ms latency     < 10ms latency     < 50ms latency       unlimited
+  
 ```
 
 - **IoT devices** perform basic sensing and actuation with minimal onboard processing;
