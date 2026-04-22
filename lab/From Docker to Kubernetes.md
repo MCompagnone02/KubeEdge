@@ -375,7 +375,7 @@ kubectl rollout undo deployment/echo
 
 ---
 
-## Side-by-side comparison
+## Comparison between Docker Compose and Kubernetes
 
 | Concern | Docker Compose | Kubernetes |
 |---|---|---|
