@@ -80,7 +80,7 @@ This is how Docker Compose concepts map to Kubernetes objects:
 
 PostgreSQL requires persistent storage, so the migration involves three objects: a `Secret` for credentials, a `PersistentVolumeClaim` for the data volume, and a `Deployment` + `Service` pair.
 
-### Secret — database credentials
+### Secret for database credentials
 
 In Docker Compose, credentials are passed as plain environment variables. In Kubernetes, sensitive values should be stored in a `Secret`.
 
@@ -99,7 +99,7 @@ stringData:
 
 > `stringData` accepts plain text — Kubernetes automatically base64-encodes the values before storing them.
 
-### PersistentVolumeClaim — data volume
+### PersistentVolumeClaim for data volume
 
 The `pg-data` named volume in Compose maps to a `PersistentVolumeClaim` in Kubernetes.
 
@@ -117,7 +117,7 @@ spec:
       storage: 1Gi
 ```
 
-### Deployment — PostgreSQL container
+### Deployment PostgreSQL container
 
 ```yaml
 # postgres-deployment.yaml
@@ -172,7 +172,7 @@ spec:
             claimName: postgres-pvc    # bind to the PVC defined above
 ```
 
-### Service — expose PostgreSQL inside the cluster
+### Service to expose PostgreSQL inside the cluster
 
 In Docker Compose, services on the same network reach each other by service name. In Kubernetes, this is handled by a `Service` — the Spring Boot app will connect to PostgreSQL at `postgres:5432`.
 
@@ -195,7 +195,7 @@ spec:
 
 ## Migrating the Spring Boot application
 
-### ConfigMap — application configuration
+### ConfigMap for application configuration
 
 The `SPRING_PROFILES_ACTIVE=docker` environment variable tells Spring Boot which configuration profile to use. In Kubernetes, non-sensitive configuration lives in a `ConfigMap`.
 
@@ -211,7 +211,7 @@ data:
 
 > It is good practice to create a dedicated `kubernetes` Spring profile (in addition to the existing `docker` profile) that points to the Kubernetes Service DNS name (`postgres:5432`) for the database URL.
 
-### Deployment — Spring Boot container
+### Deployment for the Spring Boot container
 
 ```yaml
 # echo-deployment.yaml
@@ -274,7 +274,7 @@ spec:
             periodSeconds: 15
 ```
 
-### Service — expose the application
+### Service: exposing the application
 
 ```yaml
 # echo-service.yaml
