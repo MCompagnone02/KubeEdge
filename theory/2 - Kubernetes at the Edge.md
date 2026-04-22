@@ -34,7 +34,7 @@ Network round-trips to a cloud datacenter typically take **50–200ms**. For man
 | Autonomous vehicles | < 5ms |
 | Robotic surgery | < 1ms |
 
-Waiting for a cloud response simply isn't always possible: in this cases the decision must happen locally.
+When waiting for a cloud response simply isn't  possible the decision must happen locally.
 
 ### Bandwidth
 
