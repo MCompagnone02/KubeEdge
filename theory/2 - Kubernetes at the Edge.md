@@ -4,7 +4,7 @@
 
 **Edge computing** is a distributed computing paradigm that brings computation and data storage closer to the sources of data, rather than relying on a centralized cloud datacenter.
 
-The "edge" refers to the boundary between the physical world and the digital infrastructure, it includes devices such as: industrial sensors and actuators, cameras and vision systems for real-time analysis, IoT gateways in smart buildings or cities and many more.
+The "edge" refers to the boundary between the physical world and the digital infrastructure, it includes devices such as: industrial sensors, cameras for real-time analysi and IoT gateways.
 
 ```
         [ Cloud Datacenter ]
@@ -34,11 +34,11 @@ Network round-trips to a cloud datacenter typically take **50–200ms**. For man
 | Autonomous vehicles | < 5ms |
 | Robotic surgery | < 1ms |
 
-When a robotic arm on a factory floor needs to react to a sensor reading, waiting for a cloud response simply isn't possible: the decision must happen locally.
+Waiting for a cloud response simply isn't always possible: in this cases the decision must happen locally.
 
 ### Bandwidth
 
-Modern edge deployments generate enormous volumes of raw data. A single high-resolution industrial camera can produce **1–5 GB/s** of uncompressed video. Sending all of this to the cloud is economically and technically unfeasible.
+Modern edge deployments generate enormous volumes of raw data. Sending all of this data to the cloud is economically and technically unfeasible.
 
 Edge nodes filter, compress, and analyze data locally, sending only structured results to the cloud rather than raw streams.
 
