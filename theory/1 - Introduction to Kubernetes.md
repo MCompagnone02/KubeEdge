@@ -143,7 +143,7 @@ spec:
 
 ### Service
 
-Pods are ephemeral: it means that they can be created and destroyed at any time, and their IP addresses change. A **Service** provides a stable network endpoint to reach a set of Pods.
+A **Service** provides a stable network endpoint to reach a set of Pods; this is very useful because Pods are ephemeral: it means that they can be created and destroyed at any time, and their IP addresses change. 
 
 ```yaml
 apiVersion: v1
@@ -160,14 +160,14 @@ spec:
 ```
 
 Service types:
-- `ClusterIP` is accessible only within the cluster (default);
+- `ClusterIP` is accessible only within the cluster (default choice);
 - `NodePort` exposes the service on a static port on each node;
 - `LoadBalancer` provisions an external load balancer (cloud providers);
 
 ### ConfigMap and Secret
 
-- **ConfigMap** stores non-sensitive configuration data as key-value pairs (e.g., environment variables, config files);
-- **Secret** stores sensitive data (passwords, tokens, TLS certificates) in base64-encoded form;
+- **ConfigMap** stores non-sensitive configuration data as key-value pairs (environment variables, config files);
+- **Secret** stores sensitive data (passwords, tokens) in base64-encoded form;
 
 ```yaml
 apiVersion: v1
@@ -181,7 +181,7 @@ data:
 
 ---
 
-## Interacting with the cluster: kubectl
+## kubectl
 
 `kubectl` is the command-line tool for interacting with Kubernetes. All commands communicate with the `kube-apiserver`.
 
