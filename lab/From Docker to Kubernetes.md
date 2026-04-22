@@ -76,6 +76,10 @@ This is how Docker Compose concepts map to Kubernetes objects:
 
 ---
 
+## Migrating PostgreSQL
+
+PostgreSQL requires persistent storage, so the migration involves three objects: a `Secret` for credentials, a `PersistentVolumeClaim` for the data volume, and a `Deployment` + `Service` pair.
+
 ### Secret — database credentials
 
 In Docker Compose, credentials are passed as plain environment variables. In Kubernetes, sensitive values should be stored in a `Secret`.
