@@ -6,7 +6,7 @@ Docker Compose is a tool for running multi-container applications on a single ma
 
 ---
 
-## The Docker Compose application
+## Docker Compose application
 
 The starting point is an example of a Spring Boot application backed by a PostgreSQL database, defined with Docker Compose:
 
