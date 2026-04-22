@@ -331,7 +331,7 @@ curl http://<node-ip>:31234
 
 ## Scaling
 
-One of the key advantages of Kubernetes over Docker Compose is horizontal scaling. With Compose, scaling requires manual configuration. With Kubernetes, it is a single command:
+One of the key advantages of Kubernetes over Docker Compose is horizontal scaling. With Docker Compose, scaling requires manual configuration. With Kubernetes, it is a single command:
 
 ```bash
 # Scale the echo service to 3 replicas
@@ -347,7 +347,7 @@ kubectl get pods
 
 Kubernetes automatically distributes traffic across all three replicas via the `echo` Service.
 
-> Note: PostgreSQL should not be scaled this way — a StatefulSet with a shared PVC or a managed database service should be used instead for production database deployments.
+> Note: PostgreSQL should not be scaled this way: a StatefulSet with a shared PVC or a managed database service should be used instead for production database deployments.
 
 ---
 
@@ -359,7 +359,7 @@ Updating the application image in Docker Compose requires stopping and restartin
 # Update the application image
 kubectl set image deployment/echo echo=echo-server-logs-db-java:v2
 
-# Watch the rollout
+# Rollout
 kubectl rollout status deployment/echo
 # Waiting for deployment "echo" rollout to finish: 1 out of 3 new replicas have been updated...
 # Waiting for deployment "echo" rollout to finish: 2 out of 3 new replicas have been updated...
