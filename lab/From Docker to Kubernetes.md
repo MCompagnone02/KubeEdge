@@ -2,13 +2,45 @@
 
 ## Overview
 
-Docker Compose is a tool for running multi-container applications on a single machine. Kubernetes solves the same problem at scale, using multiple machines, with self-healing, rolling updates, and production-grade networking.
+Docker Compose is a tool for running multi-container applications on a **single machine**. Kubernetes solves the same problem at scale: multiple machines, self-healing, rolling updates, and production-grade networking.
 
 ---
 
-## Docker Compose application
+## The general migration recipe
 
-The starting point is an example of a Spring Boot application backed by a PostgreSQL database, defined with Docker Compose:
+Every Docker Compose → Kubernetes migration follows the same five steps, regardless of the application:
+
+| Step | What you do |
+|------|-------------|
+| **1. Secrets** | Move sensitive env vars (`passwords`, `tokens`) into a `Secret` |
+| **2. ConfigMaps** | Move non-sensitive env vars (`profiles`, `URLs`) into a `ConfigMap` |
+| **3. Storage** | Replace named volumes with `PersistentVolumeClaims` |
+| **4. Workloads** | Each Compose `service` becomes a `Deployment` + `Service` pair |
+| **5. Startup order** | Replace `depends_on` with `initContainers` on the dependent pod |
+
+Keep this recipe in mind as you read through the example below — every decision maps to one of these five steps.
+
+---
+
+## Concept mapping
+
+| Docker Compose | Kubernetes | Notes |
+|----------------|------------|-------|
+| `service` | `Deployment` + `Service` | One Compose service becomes two K8s objects: one manages Pods, one exposes them |
+| `image` | `spec.containers[].image` | Same image name and tag |
+| `ports` | `Service.spec.ports` | Port exposure is handled by the Service, not the container directly |
+| `environment` (non-sensitive) | `ConfigMap` | Injected via `envFrom` |
+| `environment` (sensitive) | `Secret` | Injected via `envFrom` or individual `secretKeyRef` |
+| `networks` | Kubernetes DNS | Every Service is reachable by its name within the cluster — no explicit network needed |
+| `depends_on` | `initContainer` | An init container runs to completion before the main container starts |
+| `healthcheck` | `readinessProbe` + `livenessProbe` | K8s has two separate mechanisms: readiness (ready for traffic?) and liveness (still alive?) |
+| `volumes` (named) | `PersistentVolumeClaim` | A PVC requests durable storage from the cluster |
+
+---
+
+## The Docker Compose application
+
+The starting point is a Spring Boot application backed by PostgreSQL, defined with Docker Compose:
 
 ```yaml
 # docker-compose.yml
@@ -36,7 +68,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d jdbc_schema" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d jdbc_schema"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -49,43 +81,66 @@ volumes:
   pg-data:
 ```
 
-With Docker Compose, this entire stack is started with a single command:
-
 ```bash
-docker compose up
+docker compose up   # the entire stack in one command
 ```
 
-The goal is to run the same stack on Kubernetes, using native Kubernetes objects.
+The goal is to run the same stack on Kubernetes, using native objects.
 
 ---
 
-## Concept mapping
+## Manifest file organization
 
-This is how Docker Compose concepts map to Kubernetes objects:
+Rather than keeping all manifests in one directory, organize them by component. This makes `kubectl apply` predictable and the project easier to navigate:
 
-| Docker Compose | Kubernetes | Notes |
-|---|---|---|
-| `service` | `Deployment` + `Service` | A Compose service becomes two K8s objects: one manages the Pods, one exposes them on the network |
-| `image` | `spec.containers[].image` | Same image name and tag |
-| `ports` | `Service.spec.ports` | Port exposure is handled by a Service, not the container directly |
-| `environment` | `env` or `ConfigMap` / `Secret` | Plain values → `env`; sensitive values → `Secret` |
-| `networks` | Kubernetes DNS | In K8s, every Service is reachable by its name within the cluster — no explicit network definition needed |
-| `depends_on` | `readinessProbe` | K8s does not have `depends_on`; instead, each container declares when it is ready to receive traffic |
-| `volumes` (named) | `PersistentVolumeClaim` | A PVC requests durable storage from the cluster |
-| `healthcheck` | `livenessProbe` + `readinessProbe` | K8s has two separate health check mechanisms |
+```
+k8s/
+├── postgres/
+│   ├── secret.yaml
+│   ├── pvc.yaml
+│   ├── deployment.yaml
+│   └── service.yaml
+└── echo/
+    ├── configmap.yaml
+    ├── deployment.yaml
+    └── service.yaml
+```
+
+Apply the whole stack at once:
+
+```bash
+kubectl apply -f k8s/postgres/
+kubectl apply -f k8s/echo/
+```
+
+Or, with **Kustomize** (built into `kubectl`), create a `kustomization.yaml` at the root and apply everything with a single command:
+
+```yaml
+# k8s/kustomization.yaml
+resources:
+  - postgres/secret.yaml
+  - postgres/pvc.yaml
+  - postgres/deployment.yaml
+  - postgres/service.yaml
+  - echo/configmap.yaml
+  - echo/deployment.yaml
+  - echo/service.yaml
+```
+
+```bash
+kubectl apply -k k8s/
+```
 
 ---
 
-## Migrating PostgreSQL
-
-PostgreSQL requires persistent storage, so the migration involves three objects: a `Secret` for credentials, a `PersistentVolumeClaim` for the data volume, and a `Deployment` + `Service` pair.
+## Step 1 — Secrets and ConfigMaps
 
 ### Secret for database credentials
 
-In Docker Compose, credentials are passed as plain environment variables. In Kubernetes, sensitive values should be stored in a `Secret`.
+In Docker Compose, credentials are plain environment variables. In Kubernetes, sensitive values live in a `Secret`.
 
 ```yaml
-# postgres-secret.yaml
+# k8s/postgres/secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -97,30 +152,54 @@ stringData:
   POSTGRES_DB: jdbc_schema
 ```
 
-> `stringData` accepts plain text — Kubernetes automatically base64-encodes the values before storing them.
+> `stringData` accepts plain text — Kubernetes automatically base64-encodes values before storing them. Never commit real secrets to Git; use a secrets manager (Vault, Sealed Secrets, SOPS) in production.
 
-### PersistentVolumeClaim for data volume
+### ConfigMap for application configuration
 
-The `pg-data` named volume in Compose maps to a `PersistentVolumeClaim` in Kubernetes.
+Non-sensitive configuration (Spring profile, feature flags, URLs) lives in a `ConfigMap`.
 
 ```yaml
-# postgres-pvc.yaml
+# k8s/echo/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-config
+data:
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+```
+
+> Use a dedicated `kubernetes` Spring profile (separate from `docker`) that points to the Kubernetes Service DNS name (`postgres:5432`) for the database URL.
+
+---
+
+## Step 2 — Persistent storage for PostgreSQL
+
+### PersistentVolumeClaim
+
+The `pg-data` named volume in Compose maps to a `PersistentVolumeClaim`.
+
+```yaml
+# k8s/postgres/pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
 spec:
   accessModes:
-    - ReadWriteOnce      # one node can mount this volume at a time
+    - ReadWriteOnce       # one node can mount this volume at a time
   resources:
     requests:
       storage: 1Gi
 ```
 
-### Deployment PostgreSQL container
+---
+
+## Step 3 — Deploying PostgreSQL
+
+### Deployment
 
 ```yaml
-# postgres-deployment.yaml
+# k8s/postgres/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -139,7 +218,7 @@ spec:
         - name: postgres
           image: postgres:17-alpine
 
-          # Load credentials from the Secret
+          # Step 1: load credentials from the Secret
           envFrom:
             - secretRef:
                 name: postgres-secret
@@ -147,74 +226,66 @@ spec:
           ports:
             - containerPort: 5432
 
-          # Mount the persistent volume at the PostgreSQL data directory
+          # Step 3: mount the persistent volume
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
 
-          # Equivalent to docker-compose healthcheck
+          # Readiness probe: Pod receives traffic only when DB is accepting connections
           readinessProbe:
             exec:
-              command:
-                - pg_isready
-                - -U
-                - user
-                - -d
-                - jdbc_schema
+              command: ["pg_isready", "-U", "user", "-d", "jdbc_schema"]
             initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 5
 
+          # Liveness probe: restart the container if it becomes permanently unresponsive
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "user", "-d", "jdbc_schema"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:
-            claimName: postgres-pvc    # bind to the PVC defined above
+            claimName: postgres-pvc
 ```
 
-### Service to expose PostgreSQL inside the cluster
+### Service
 
-In Docker Compose, services on the same network reach each other by service name. In Kubernetes, this is handled by a `Service` — the Spring Boot app will connect to PostgreSQL at `postgres:5432`.
+In Kubernetes, inter-service networking is handled by DNS. The Spring Boot app connects to PostgreSQL at `postgres:5432` — the name of the Service below.
 
 ```yaml
-# postgres-service.yaml
+# k8s/postgres/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres          # this name is the DNS hostname other Pods will use
+  name: postgres         # this becomes the DNS hostname other Pods use
 spec:
   selector:
-    app: postgres         # routes traffic to Pods with this label
+    app: postgres
   ports:
     - port: 5432
       targetPort: 5432
-  type: ClusterIP         # internal only — PostgreSQL should not be exposed externally
+  type: ClusterIP        # internal only — never expose a database externally
 ```
+
+> **Deployment vs StatefulSet for databases**: this example uses a `Deployment` for simplicity (one replica, single PVC). For production PostgreSQL — especially with replication — use a `StatefulSet`, which assigns a stable network identity and a dedicated PVC to each replica. For a single-instance dev database, `Deployment` + PVC is acceptable.
 
 ---
 
-## Migrating the Spring Boot application
+## Step 4 — Deploying the Spring Boot application
 
-### ConfigMap for application configuration
+### Deployment with initContainer
 
-The `SPRING_PROFILES_ACTIVE=docker` environment variable tells Spring Boot which configuration profile to use. In Kubernetes, non-sensitive configuration lives in a `ConfigMap`.
-
-```yaml
-# echo-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: echo-config
-data:
-  SPRING_PROFILES_ACTIVE: "kubernetes"   # use a dedicated K8s profile
-```
-
-> It is good practice to create a dedicated `kubernetes` Spring profile (in addition to the existing `docker` profile) that points to the Kubernetes Service DNS name (`postgres:5432`) for the database URL.
-
-### Deployment for the Spring Boot container
+The `depends_on: condition: service_healthy` in Compose is replaced by an `initContainer` that polls PostgreSQL until it is ready. Only after the initContainer exits successfully does Kubernetes start the main application container.
 
 ```yaml
-# echo-deployment.yaml
+# k8s/echo/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -229,17 +300,32 @@ spec:
       labels:
         app: echo
     spec:
+
+      # Step 5: wait for PostgreSQL before starting the app
+      # This is the correct Kubernetes equivalent of depends_on: service_healthy
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres 5432; do
+                echo "Waiting for postgres..."; sleep 2
+              done
+              echo "PostgreSQL is ready."
+
       containers:
         - name: echo
           image: echo-server-logs-db-java:latest
-          imagePullPolicy: IfNotPresent   # use local image if available
+          imagePullPolicy: IfNotPresent
 
-          # Load config from ConfigMap
+          # Step 2: load non-sensitive config from ConfigMap
           envFrom:
             - configMapRef:
                 name: echo-config
 
-          # Also inject DB credentials from the Secret
+          # Step 1: inject DB credentials from the Secret individually
           env:
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
@@ -255,8 +341,7 @@ spec:
           ports:
             - containerPort: 5000
 
-          # Kubernetes equivalent of depends_on:
-          # the Pod will not receive traffic until this probe passes
+          # Readiness: Pod does not receive traffic until Spring Boot is fully started
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -265,19 +350,20 @@ spec:
             periodSeconds: 10
             failureThreshold: 5
 
-          # Restart the container if it becomes unresponsive
+          # Liveness: restart the container if the health endpoint stops responding
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 5000
             initialDelaySeconds: 30
             periodSeconds: 15
+            failureThreshold: 3
 ```
 
-### Service: exposing the application
+### Service
 
 ```yaml
-# echo-service.yaml
+# k8s/echo/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -288,107 +374,110 @@ spec:
   ports:
     - port: 5000
       targetPort: 5000
-  type: NodePort      # exposes the service on a port of each node
-                      # use LoadBalancer on cloud providers
+  type: NodePort        # exposes on a port of each node
+                        # use LoadBalancer on cloud providers (GKE, EKS, AKS)
 ```
 
 ---
 
-## Deploying the full stack
-
-With all manifests in place, the full stack is deployed with:
+## Step 5 - Deploying the full stack
 
 ```bash
-# Apply all manifests in order
-kubectl apply -f postgres-secret.yaml
-kubectl apply -f postgres-pvc.yaml
-kubectl apply -f postgres-deployment.yaml
-kubectl apply -f postgres-service.yaml
-kubectl apply -f echo-configmap.yaml
-kubectl apply -f echo-deployment.yaml
-kubectl apply -f echo-service.yaml
+# Apply in dependency order: storage and DB first, then the app
+kubectl apply -f k8s/postgres/
+kubectl apply -f k8s/echo/
 
-# Or apply everything in the directory at once
-kubectl apply -f .
+# Or with Kustomize (applies everything in the correct order)
+kubectl apply -k k8s/
 ```
 
-Verify the stack is running:
+Verify the stack:
 
 ```bash
-# Check all Pods are Running
-kubectl get pods
-# NAME                        READY   STATUS    AGE
-# postgres-6d8f9b8c4-abc12    1/1     Running   2m
-# echo-7f9d6c5b3-xyz99        1/1     Running   1m
+# All Pods should reach Running (the echo Pod starts after the initContainer exits)
+kubectl get pods -w
+# NAME                        READY   STATUS       AGE
+# postgres-6d8f9b8c4-abc12    0/1     Running      5s
+# postgres-6d8f9b8c4-abc12    1/1     Running      15s   ← readinessProbe passed
+# echo-7f9d6c5b3-xyz99        0/1     Init:0/1     0s    ← initContainer running
+# echo-7f9d6c5b3-xyz99        0/1     PodInitializing  8s
+# echo-7f9d6c5b3-xyz99        1/1     Running      30s   ← app started
 
-# Check Services
+# Services
 kubectl get services
-# NAME       TYPE        CLUSTER-IP      PORT(S)
-# postgres   ClusterIP   10.96.0.10      5432/TCP
-# echo       NodePort    10.96.0.11      5000:31234/TCP
-
-# Access the application
-curl http://<node-ip>:31234
+# NAME       TYPE        CLUSTER-IP     PORT(S)
+# postgres   ClusterIP   10.96.0.10     5432/TCP
+# echo       NodePort    10.96.0.11     5000:31234/TCP
 ```
+
+### Accessing the application
+
+```bash
+# Option A — via NodePort (requires knowing the node IP)
+curl http://<node-ip>:31234
+
+# Option B — port-forward (simpler for local development, no NodePort needed)
+kubectl port-forward service/echo 5000:5000
+curl http://localhost:5000
+```
+
+> `kubectl port-forward` is the easiest way to access a service locally during development. It creates a direct tunnel between your machine and the Pod — no need to expose a NodePort or configure an Ingress.
 
 ---
 
 ## Scaling
 
-One of the key advantages of Kubernetes over Docker Compose is horizontal scaling. With Docker Compose, scaling requires manual configuration. With Kubernetes, it is a single command:
+One of the key advantages of Kubernetes over Docker Compose is **horizontal scaling** with a single command:
 
 ```bash
 # Scale the echo service to 3 replicas
 kubectl scale deployment echo --replicas=3
 
-# Verify
+# Kubernetes automatically distributes traffic across all replicas via the Service
 kubectl get pods
-# NAME                        READY   STATUS    AGE
-# echo-7f9d6c5b3-xyz99        1/1     Running   5m
-# echo-7f9d6c5b3-abc12        1/1     Running   10s
-# echo-7f9d6c5b3-def34        1/1     Running   10s
+# NAME                    READY   STATUS    AGE
+# echo-7f9d6c5b3-xyz99   1/1     Running   5m
+# echo-7f9d6c5b3-abc12   1/1     Running   10s
+# echo-7f9d6c5b3-def34   1/1     Running   10s
 ```
-
-Kubernetes automatically distributes traffic across all three replicas via the `echo` Service.
-
-> Note: PostgreSQL should not be scaled this way: a StatefulSet with a shared PVC or a managed database service should be used instead for production database deployments.
 
 ---
 
 ## Rolling updates
 
-Updating the application image in Docker Compose requires stopping and restarting the container, causing downtime. Kubernetes performs rolling updates with zero downtime:
+Kubernetes performs zero-downtime rolling updates automatically:
 
 ```bash
-# Update the application image
+# Deploy a new image version
 kubectl set image deployment/echo echo=echo-server-logs-db-java:v2
 
-# Rollout
+# Watch the rollout: new Pods come up before old ones are terminated
 kubectl rollout status deployment/echo
 # Waiting for deployment "echo" rollout to finish: 1 out of 3 new replicas have been updated...
 # Waiting for deployment "echo" rollout to finish: 2 out of 3 new replicas have been updated...
 # deployment "echo" successfully rolled out
 
-# Roll back if something goes wrong
+# Something went wrong? Roll back instantly
 kubectl rollout undo deployment/echo
 ```
 
 ---
 
-## Comparison between Docker Compose and Kubernetes
+## Command reference: Docker Compose vs Kubernetes
 
-| Concern | Docker Compose | Kubernetes |
-|---|---|---|
-| Start the stack | `docker compose up` | `kubectl apply -f .` |
-| Stop the stack | `docker compose down` | `kubectl delete -f .` |
+| Operation | Docker Compose | Kubernetes |
+|-----------|---------------|------------|
+| Start the stack | `docker compose up` | `kubectl apply -f k8s/` |
+| Stop the stack | `docker compose down` | `kubectl delete -f k8s/` |
 | Scale a service | `docker compose up --scale echo=3` | `kubectl scale deployment echo --replicas=3` |
 | Update an image | `docker compose pull && docker compose up` | `kubectl set image deployment/echo echo=<new-image>` |
-| View logs | `docker compose logs echo` | `kubectl logs -l app=echo` |
+| View logs | `docker compose logs echo` | `kubectl logs -l app=echo -f` |
 | Exec into container | `docker compose exec echo bash` | `kubectl exec -it <pod-name> -- bash` |
-| Persistent storage | Named volume | PersistentVolumeClaim |
-| Inter-service networking | Service name on shared network | Service DNS name |
+| Access a service locally | `localhost:<port>` | `kubectl port-forward service/echo 5000:5000` |
+| Persistent storage | Named volume | `PersistentVolumeClaim` |
+| Inter-service networking | Service name on shared network | Service DNS name (automatic) |
 | Health checks | `healthcheck` block | `readinessProbe` + `livenessProbe` |
-| Startup ordering | `depends_on` | `readinessProbe` (traffic withheld until ready) |
+| Startup ordering | `depends_on` | `initContainer` |
 | Sensitive config | Plain env vars | `Secret` |
 | Non-sensitive config | Plain env vars | `ConfigMap` |
 
@@ -396,12 +485,17 @@ kubectl rollout undo deployment/echo
 
 ## Summary
 
-Migrating from Docker Compose to Kubernetes requires more files and more explicit configuration, but each piece of that configuration unlocks capabilities that Docker Compose cannot provide: self-healing, horizontal scaling, rolling updates, and production-grade secret management.
+Migrating from Docker Compose to Kubernetes requires more files and more explicit configuration, but each piece unlocks capabilities that Docker Compose cannot provide: self-healing, horizontal scaling, rolling updates, and production-grade secret management.
 
-The core migration pattern is always the same:
+The core recipe is always the same:
 
-1. Each Compose `service` becomes a `Deployment` + `Service` pair;
-2. Named volumes become `PersistentVolumeClaims`;
-3. Plain environment variables become `ConfigMaps` (non-sensitive) or `Secrets` (sensitive);
-4. `depends_on` becomes a `readinessProbe` on the dependent container;
-5. Shared networks disappear because Kubernetes DNS handles service discovery automatically;
+1. Sensitive environment variables → **Secret**;
+2. Non-sensitive environment variables → **ConfigMap**;
+3. Named volumes → **PersistentVolumeClaim**;
+4. Each Compose service → **Deployment** + **Service**;
+5. `depends_on` → **initContainer** on the dependent pod;
+
+---
+
+*Previous: [From Docker to Kubernetes (Lab 0)](./1.1%20-%20From%20Docker%20to%20Kubernetes.md)*  
+*Next: [KubeEdge Lab](./6%20-%20KubeEdge%20(Lab).md)*
