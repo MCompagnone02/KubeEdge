@@ -172,9 +172,6 @@ Workloads can be distributed to specific NodePools, enabling topology-aware depl
 | Multi-node edge management | — | ✓ | ✓ | ✓ |
 | Non-invasive (no K8s fork) | ✓ | ✓ | ✓ | — |
 | Node grouping / topology | — | — | ✓ | ✓ |
-| Minimum RAM (edge node) | ~512 MB | ~512 MB | ~256 MB* | ~128 MB |
-
-*YurtHub alone; requires a running kubelet underneath.
 
 ### Key takeaways
 
