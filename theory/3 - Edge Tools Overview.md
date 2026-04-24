@@ -4,17 +4,11 @@
 
 Several projects extend Kubernetes for edge environments. Each makes different trade-offs between simplicity, resource footprint, IoT support, and compatibility with the standard Kubernetes API.
 
-This module provides a comparative overview of the most relevant tools, setting the context for the deep dive into KubeEdge in the next module.
-
-> **Key question to keep in mind:** Standard Kubernetes handles connectivity loss by evicting pods from unreachable nodes. Is that acceptable at the edge? The answer shapes which tool you choose.
-
 ---
 
 ## K3s
 
 **K3s** is a lightweight, fully conformant Kubernetes distribution created by Rancher (now part of SUSE). Its goal is to reduce the resource requirements of a standard Kubernetes installation while maintaining full API compatibility.
-
-### How it achieves this
 
 K3s packages the entire control plane into a **single binary** (~70 MB), replacing or removing several heavy components:
 
@@ -28,12 +22,12 @@ K3s packages the entire control plane into a **single binary** (~70 MB), replaci
 
 ### Key characteristics
 
-- **Minimum requirements**: 512 MB RAM, 1 CPU core — runs comfortably on a Raspberry Pi 4
-- **Installation**: single command (`curl -sfL https://get.k3s.io | sh -`)
-- **Full K8s API compatibility**: all standard `kubectl` commands and YAML manifests work without modification
-- **ARM support**: native support for ARM64 and ARMv7 architectures
-- **Auto-updating**: built-in support via the Rancher update controller
-- **Startup time**: cluster ready in under 30 seconds on modest hardware
+- **Minimum requirements**: 512 MB RAM, 1 CPU core;
+- **Installation**: simple using a single command;
+- **Full K8s API compatibility**: all standard `kubectl` commands and YAML manifests work without modification;
+- **ARM support**: native support for ARM64 and ARMv7 architectures;
+- **Auto-updating**: built-in support via the Rancher update controller;
+- **Startup time**: cluster ready in under 30 seconds on modest hardware;
 
 ### Security model
 
@@ -43,9 +37,9 @@ K3s uses the same RBAC, TLS, and service account mechanisms as standard Kubernet
 
 K3s is a lightweight Kubernetes distribution, but it is not specifically designed for edge scenarios. It still assumes:
 
-- Reasonably stable connectivity to the control plane
-- No native IoT device management
-- Nodes are expected to stay online; offline autonomy is not a built-in feature — a disconnected K3s agent cannot restart crashed pods without API server access
+- Reasonably stable connectivity to the control plane;
+- No native IoT device management;
+- Nodes are expected to stay online; offline autonomy is not a built-in feature: a disconnected K3s agent cannot restart crashed pods without API server access;
 
 K3s is best used as the **cloud-side cluster** in an edge deployment, providing the lightweight control plane that KubeEdge or other tools extend toward the edge.
 
@@ -67,8 +61,6 @@ curl -sfL https://get.k3s.io | K3S_URL=https://<server>:6443 \
 
 **MicroK8s** is a lightweight Kubernetes distribution developed and maintained by Canonical (the company behind Ubuntu). It is designed for developer workstations, CI/CD pipelines, and small-scale edge deployments.
 
-### How it works
-
 MicroK8s is distributed as a **snap package** — Canonical's containerized software packaging format. This means it installs in strict isolation from the host system and updates automatically through the snap store without disrupting the running cluster.
 
 ```bash
@@ -87,20 +79,20 @@ sudo snap alias microk8s.kubectl kubectl
 
 ### Key characteristics
 
-- **Developer-friendly**: single-node cluster ready in under a minute on any Ubuntu machine
-- **Add-on ecosystem**: optional components (DNS, dashboard, Istio, Knative, Prometheus) enabled with a single command
-- **High availability**: supports multi-node HA clusters with automatic etcd clustering via `microk8s add-node`
-- **Strict confinement**: snap packaging isolates MicroK8s from the rest of the system — clean uninstall, no residue
-- **Automatic updates**: managed through the snap store channels (stable, candidate, beta, edge)
-- **GPU support**: `microk8s enable gpu` exposes NVIDIA GPUs to workloads via the NVIDIA operator
+- **Developer-friendly**: single-node cluster ready in under a minute on any Ubuntu machine;
+- **Add-on ecosystem**: optional components (DNS, dashboard, Istio, Knative, Prometheus) enabled with a single command;
+- **High availability**: supports multi-node HA clusters with automatic etcd clustering via `microk8s add-node`;
+- **Strict confinement**: snap packaging isolates MicroK8s from the rest of the system — clean uninstall, no residue;
+- **Automatic updates**: managed through the snap store channels (stable, candidate, beta, edge);
+- **GPU support**: `microk8s enable gpu` exposes NVIDIA GPUs to workloads via the NVIDIA operator;
 
 ### Limitations for edge
 
 Like K3s, MicroK8s is a general-purpose lightweight distribution. It does not natively address:
 
-- Offline node autonomy
-- IoT device management
-- Geographically distributed, intermittently connected nodes
+- Offline node autonomy;
+- IoT device management;
+- Geographically distributed, intermittently connected nodes;
 
 MicroK8s is best suited for **developer environments** and small, well-connected edge clusters where the full IoT management features of KubeEdge are not needed.
 
@@ -109,8 +101,6 @@ MicroK8s is best suited for **developer environments** and small, well-connected
 ## OpenYurt
 
 **OpenYurt** is an open-source project by Alibaba Cloud that adds edge autonomy capabilities on top of a standard Kubernetes cluster, rather than replacing it.
-
-### Philosophy: non-invasive extension
 
 OpenYurt's core design principle is **non-invasiveness**: it does not modify the Kubernetes control plane or any of its components. Instead, it adds a transparent proxy layer between the control plane and the edge nodes.
 
@@ -153,18 +143,18 @@ Workloads can be distributed to specific NodePools, enabling topology-aware depl
 
 ### Key characteristics
 
-- **Non-invasive**: works with any standard Kubernetes cluster (EKS, GKE, on-prem) without modification
-- **Node autonomy**: YurtHub provides offline operation through local HTTP response caching
-- **Node pools**: topology-aware workload management at scale
-- **Tunnel**: secure channel for `kubectl exec/logs` over NAT, even to offline-recovered nodes
-- **Cloud vendor integration**: deep integration with Alibaba Cloud ACK
+- **Non-invasive**: works with any standard Kubernetes cluster (EKS, GKE, on-prem) without modification;
+- **Node autonomy**: YurtHub provides offline operation through local HTTP response caching;
+- **Node pools**: topology-aware workload management at scale;
+- **Tunnel**: secure channel for `kubectl exec/logs` over NAT, even to offline-recovered nodes;
+- **Cloud vendor integration**: deep integration with Alibaba Cloud ACK;
 
 ### Limitations
 
-- No native IoT device management model (no Device/DeviceModel CRDs)
-- Requires YurtHub to be running on each edge node — adds a process dependency
-- Tighter coupling to Alibaba Cloud tooling in some components
-- More complex initial setup than K3s or MicroK8s
+- No native IoT device management model (no Device/DeviceModel CRDs);
+- Requires YurtHub to be running on each edge node — adds a process dependency;
+- Tighter coupling to Alibaba Cloud tooling in some components;
+- More complex initial setup than K3s or MicroK8s;
 
 ---
 
@@ -206,17 +196,13 @@ Workloads can be distributed to specific NodePools, enabling topology-aware depl
 | IoT deployments, offline nodes, device management | KubeEdge |
 | Lightweight cloud control plane + IoT edge layer | **K3s + KubeEdge** |
 
-The last combination — **K3s as the cloud cluster and KubeEdge for the edge layer** — is a common and practical pattern used in this course's labs: K3s provides a low-overhead control plane on the cloud VM, while KubeEdge extends it with the edge-specific features that standard Kubernetes lacks.
-
 ### When to combine tools
 
 It is not uncommon to use multiple tools in a single deployment:
 
-- **K3s (cloud)** → manages the cluster control plane, keeps the cloud VM footprint small
-- **KubeEdge (edge)** → manages the actual edge nodes and IoT devices
-- **OpenYurt-style node pools** → logical grouping of KubeEdge edge nodes, if needed at scale
-
-This layered approach lets each tool do what it does best.
+- **K3s (cloud)** manages the cluster control plane, keeps the cloud VM footprint small;
+- **KubeEdge (edge)** manages the actual edge nodes and IoT devices;
+- **OpenYurt-style node pools** logical grouping of KubeEdge edge nodes, if needed at scale;
 
 ---
 
