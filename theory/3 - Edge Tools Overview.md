@@ -193,8 +193,6 @@ Workloads can be distributed to specific NodePools, enabling topology-aware depl
 | IoT deployments, offline nodes, device management | KubeEdge |
 | Lightweight cloud control plane + IoT edge layer | **K3s + KubeEdge** |
 
-### When to combine tools
-
 It is not uncommon to use multiple tools in a single deployment:
 
 - **K3s (cloud)** manages the cluster control plane, keeps the cloud VM footprint small;
