@@ -10,7 +10,7 @@ Several projects extend Kubernetes for edge environments. Each makes different t
 
 **K3s** is a lightweight, fully conformant Kubernetes distribution created by Rancher (now part of SUSE). Its goal is to reduce the resource requirements of a standard Kubernetes installation while maintaining full API compatibility.
 
-K3s packages the entire control plane into a **single binary** (~70 MB), replacing or removing several heavy components:
+K3s packages the entire control plane into a **single binary**, replacing or removing several heavy components:
 
 | Standard K8s component | K3s equivalent |
 |------------------------|----------------|
@@ -61,7 +61,7 @@ curl -sfL https://get.k3s.io | K3S_URL=https://<server>:6443 \
 
 **MicroK8s** is a lightweight Kubernetes distribution developed and maintained by Canonical (the company behind Ubuntu). It is designed for developer workstations, CI/CD pipelines, and small-scale edge deployments.
 
-MicroK8s is distributed as a **snap package** — Canonical's containerized software packaging format. This means it installs in strict isolation from the host system and updates automatically through the snap store without disrupting the running cluster.
+MicroK8s is distributed as a **snap package** (canonical's containerized software packaging format). This means it installs in strict isolation from the host system and updates automatically through the snap store without disrupting the running cluster.
 
 ```bash
 # Install MicroK8s
@@ -112,7 +112,7 @@ OpenYurt's core design principle is **non-invasiveness**: it does not modify the
 [ kubelet ]
 ```
 
-**YurtHub** is the central component: a local HTTP/HTTPS proxy that intercepts all communication between `kubelet` and the API server, caching every response in a local store. If connectivity is lost, `kubelet` continues to send requests to `YurtHub` — which transparently serves the cached state, making the node behave as if the API server is still reachable.
+**YurtHub** is the central component: a local HTTP/HTTPS proxy that intercepts all communication between `kubelet` and the API server, caching every response in a local store. If connectivity is lost, `kubelet` continues to send requests to `YurtHub`, which transparently serves the cached state, making the node behave as if the API server is still reachable.
 
 ### Components
 
@@ -203,7 +203,7 @@ It is not uncommon to use multiple tools in a single deployment:
 
 ## Summary
 
-The edge Kubernetes ecosystem offers a spectrum of tools, from lightweight distributions (K3s, MicroK8s) to purpose-built edge platforms (KubeEdge, OpenYurt). No single tool is the right choice for every scenario.
+The edge Kubernetes ecosystem offers many tools to work with, from lightweight distributions (K3s, MicroK8s) to purpose-built edge platforms (KubeEdge, OpenYurt). No single tool is the right choice for every scenario.
 
 KubeEdge stands out for deployments that require all three core edge capabilities simultaneously: resource efficiency, offline autonomy, and IoT device management. The next module explores its architecture in depth.
 
