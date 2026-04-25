@@ -6,7 +6,7 @@ Docker Compose is a tool for running multi-container applications on a **single 
 
 ---
 
-## The general migration recipe
+## General Migration
 
 Every Docker Compose → Kubernetes migration follows the same five steps, regardless of the application:
 
@@ -17,8 +17,6 @@ Every Docker Compose → Kubernetes migration follows the same five steps, regar
 | **3. Storage** | Replace named volumes with `PersistentVolumeClaims` |
 | **4. Workloads** | Each Compose `service` becomes a `Deployment` + `Service` pair |
 | **5. Startup order** | Replace `depends_on` with `initContainers` on the dependent pod |
-
-Keep this recipe in mind as you read through the example below — every decision maps to one of these five steps.
 
 ---
 
@@ -85,52 +83,6 @@ volumes:
 docker compose up   # the entire stack in one command
 ```
 
-The goal is to run the same stack on Kubernetes, using native objects.
-
----
-
-## Manifest file organization
-
-Rather than keeping all manifests in one directory, organize them by component. This makes `kubectl apply` predictable and the project easier to navigate:
-
-```
-k8s/
-├── postgres/
-│   ├── secret.yaml
-│   ├── pvc.yaml
-│   ├── deployment.yaml
-│   └── service.yaml
-└── echo/
-    ├── configmap.yaml
-    ├── deployment.yaml
-    └── service.yaml
-```
-
-Apply the whole stack at once:
-
-```bash
-kubectl apply -f k8s/postgres/
-kubectl apply -f k8s/echo/
-```
-
-Or, with **Kustomize** (built into `kubectl`), create a `kustomization.yaml` at the root and apply everything with a single command:
-
-```yaml
-# k8s/kustomization.yaml
-resources:
-  - postgres/secret.yaml
-  - postgres/pvc.yaml
-  - postgres/deployment.yaml
-  - postgres/service.yaml
-  - echo/configmap.yaml
-  - echo/deployment.yaml
-  - echo/service.yaml
-```
-
-```bash
-kubectl apply -k k8s/
-```
-
 ---
 
 ## Step 1 — Secrets and ConfigMaps
@@ -151,8 +103,6 @@ stringData:
   POSTGRES_PASSWORD: secret
   POSTGRES_DB: jdbc_schema
 ```
-
-> `stringData` accepts plain text — Kubernetes automatically base64-encodes values before storing them. Never commit real secrets to Git; use a secrets manager (Vault, Sealed Secrets, SOPS) in production.
 
 ### ConfigMap for application configuration
 
