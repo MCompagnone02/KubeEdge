@@ -118,8 +118,6 @@ data:
   SPRING_PROFILES_ACTIVE: "kubernetes"
 ```
 
-> Use a dedicated `kubernetes` Spring profile (separate from `docker`) that points to the Kubernetes Service DNS name (`postgres:5432`) for the database URL.
-
 ---
 
 ## Step 2 — Persistent storage for PostgreSQL
@@ -207,7 +205,7 @@ spec:
 
 ### Service
 
-In Kubernetes, inter-service networking is handled by DNS. The Spring Boot app connects to PostgreSQL at `postgres:5432` — the name of the Service below.
+In Kubernetes, inter-service networking is handled by DNS. The Spring Boot app connects to PostgreSQL at `postgres:5432`.
 
 ```yaml
 # k8s/postgres/service.yaml
@@ -224,7 +222,7 @@ spec:
   type: ClusterIP        # internal only — never expose a database externally
 ```
 
-> **Deployment vs StatefulSet for databases**: this example uses a `Deployment` for simplicity (one replica, single PVC). For production PostgreSQL — especially with replication — use a `StatefulSet`, which assigns a stable network identity and a dedicated PVC to each replica. For a single-instance dev database, `Deployment` + PVC is acceptable.
+**Deployment vs StatefulSet for databases**: this example uses a `Deployment` for simplicity (one replica, single PVC). For production PostgreSQL — especially with replication — use a `StatefulSet`, which assigns a stable network identity and a dedicated PVC to each replica. For a single-instance dev database, `Deployment` + PVC is acceptable.
 
 ---
 
@@ -325,7 +323,7 @@ spec:
     - port: 5000
       targetPort: 5000
   type: NodePort        # exposes on a port of each node
-                        # use LoadBalancer on cloud providers (GKE, EKS, AKS)
+                       
 ```
 
 ---
@@ -363,15 +361,15 @@ kubectl get services
 ### Accessing the application
 
 ```bash
-# Option A — via NodePort (requires knowing the node IP)
+# Option A: via NodePort (requires knowing the node IP)
 curl http://<node-ip>:31234
 
-# Option B — port-forward (simpler for local development, no NodePort needed)
+# Option B: cport-forward (simpler for local development, no NodePort needed)
 kubectl port-forward service/echo 5000:5000
 curl http://localhost:5000
 ```
 
-> `kubectl port-forward` is the easiest way to access a service locally during development. It creates a direct tunnel between your machine and the Pod — no need to expose a NodePort or configure an Ingress.
+`kubectl port-forward` is the easiest way to access a service locally during development. It creates a direct tunnel between your machine and the Pod — no need to expose a NodePort or configure an Ingress.
 
 ---
 
@@ -407,7 +405,7 @@ kubectl rollout status deployment/echo
 # Waiting for deployment "echo" rollout to finish: 2 out of 3 new replicas have been updated...
 # deployment "echo" successfully rolled out
 
-# Something went wrong? Roll back instantly
+# If something went wrong, the roll back is instant with this command
 kubectl rollout undo deployment/echo
 ```
 
