@@ -2,13 +2,13 @@
 
 ## Overview
 
-KubeEdge is an open-source project hosted by the CNCF (Cloud Native Computing Foundation) that extends Kubernetes to edge environments. Originally developed by Huawei and contributed to the CNCF in 2019, it reached incubating status in 2019 and has since grown into the de-facto standard for Kubernetes-based IoT and edge deployments.
+KubeEdge is an open-source project hosted by the CNCF (Cloud Native Computing Foundation) that extends Kubernetes to edge environments. It's the de-facto standard for Kubernetes-based IoT and edge deployments.
 
 Its architecture is built around a clear separation between three layers:
 
-- **Cloud layer**: the standard Kubernetes control plane, augmented by CloudCore
-- **Edge layer**: lightweight edge nodes running EdgeCore (replaces kubelet)
-- **Device layer**: physical IoT devices communicating over MQTT
+- **Cloud layer**: the standard Kubernetes control plane;
+- **Edge layer**: lightweight edge nodes running EdgeCore (replaces kubelet);
+- **Device layer**: physical IoT devices communicating over MQTT;
 
 ```
 +----------------------------------------------------------+
@@ -101,18 +101,18 @@ CloudCore and EdgeCore communicate over a **WebSocket** tunnel (with **QUIC** as
 
 Two critical design decisions:
 
-1. **Firewall-friendly**: the edge node *initiates* the outbound connection to CloudCore. No inbound ports need to be open on the edge side — crucial when edge nodes are behind NAT or corporate firewalls.
+1. **Firewall-friendly**: the edge node *initiates* the outbound connection to CloudCore. No inbound ports need to be open on the edge side: this is crucial when edge nodes are behind NAT or corporate firewalls;
 
-2. **Resilient to disconnection**: the tunnel reconnects automatically after network outages. Messages are queued locally (in MetaManager and EdgeHub) to avoid data loss during interruptions.
+2. **Resilient to disconnection**: the tunnel reconnects automatically after network outages. Messages are queued locally (in MetaManager and EdgeHub) to avoid data loss during interruptions;
 
 ### Security: certificate-based authentication
 
 Every edge node authenticates to CloudCore using **TLS mutual authentication**. The join flow:
 
-1. `keadm gettoken` generates a time-limited bootstrap token on the cloud node
-2. `keadm join` on the edge node uses the token to request a certificate from CloudCore
-3. CloudCore signs and returns a node certificate
-4. Subsequent connections use the node certificate for mutual TLS — the bootstrap token is no longer needed
+1. `keadm gettoken` generates a time-limited bootstrap token on the cloud node;
+2. `keadm join` on the edge node uses the token to request a certificate from CloudCore;
+3. CloudCore signs and returns a node certificate;
+4. Subsequent connections use the node certificate for mutual TLS — the bootstrap token is no longer needed;
 
 ```bash
 # Token is valid for a limited time (default: 24 hours)
@@ -127,7 +127,7 @@ keadm join --cloudcore-ipport=<ip>:10000 --token=<token>
 
 ## Edge layer
 
-The edge layer runs on each edge node. Its core component is **EdgeCore** — a single binary that bundles all edge-side functionality and replaces the standard Kubernetes node agent (`kubelet`).
+The edge layer runs on each edge node. Its core component is **EdgeCore**, which is a single binary that bundles all edge-side functionality and replaces the standard Kubernetes node agent (`kubelet`).
 
 ### EdgeCore
 
@@ -137,11 +137,11 @@ EdgeCore contains five sub-components, each responsible for a specific aspect of
 
 Edged is a streamlined replacement for `kubelet`. It manages the full Pod lifecycle on the edge node:
 
-- Pulling container images from registries (or local cache)
-- Starting and stopping containers via the local container runtime (`containerd` or `CRI-O`)
-- Monitoring container health via liveness and readiness probes
-- Restarting failed containers according to the Pod's `restartPolicy`
-- Mounting volumes (ConfigMaps, Secrets, emptyDir, hostPath)
+- Pulling container images from registries (or local cache);
+- Starting and stopping containers via the local container runtime (`containerd` or `CRI-O`);
+- Monitoring container health via liveness and readiness probes;
+- Restarting failed containers according to the Pod's `restartPolicy`;
+- Mounting volumes (ConfigMaps, Secrets, emptyDir, hostPath);
 
 **Critical difference from standard kubelet**: Edged does not require a live connection to the API server to manage running Pods. It works entirely from the local state provided by MetaManager. When the cloud is unreachable, running pods continue normally and crashed containers are restarted from the cached spec.
 
@@ -181,8 +181,8 @@ Cloud (desired state: "alarm-threshold = 75.0°C")
 Physical device    (reported state: "current temp = 23.4°C, threshold = 75.0°C")
 ```
 
-- **Desired state**: the configuration pushed from the cloud (e.g., "set motor speed to 1200 RPM")
-- **Reported state**: the actual current state of the physical device (e.g., "current motor speed: 1185 RPM")
+- **Desired state**: the configuration pushed from the cloud;
+- **Reported state**: the actual current state of the physical device;
 
 DeviceTwin continuously works to reconcile the two, pushing configuration updates to the device via EventBus (MQTT) and collecting sensor readings to report back to the cloud.
 
@@ -194,8 +194,8 @@ EventBus is KubeEdge's **MQTT integration layer**. It connects DeviceTwin to the
 
 EventBus can operate in two modes:
 
-- **Internal MQTT broker**: KubeEdge runs an embedded Mosquitto broker on the edge node (default port 1883). Suitable for small deployments.
-- **External MQTT broker**: KubeEdge connects to an existing broker (e.g., EMQX, HiveMQ, AWS IoT Core). Suitable for production deployments with multiple edge nodes sharing a broker.
+- **Internal MQTT broker**: KubeEdge runs an embedded Mosquitto broker on the edge node (default port 1883). Suitable for small deployments;
+- **External MQTT broker**: KubeEdge connects to an existing broker (e.g., EMQX, HiveMQ, AWS IoT Core). Suitable for production deployments with multiple edge nodes sharing a broker;
 
 ```
 Physical device  →  MQTT PUBLISH  →  EventBus  →  DeviceTwin  →  Cloud
@@ -212,10 +212,10 @@ EdgeHub manages the WebSocket (or QUIC) connection to CloudCore. It is the **sin
 
 No other component communicates directly with the cloud. Edged, MetaManager, and DeviceTwin all pass their outgoing messages through EdgeHub, which handles:
 
-- Connection establishment and TLS handshake
-- Automatic reconnection with exponential backoff after network outages
-- Message queuing and delivery guarantees
-- Routing incoming cloud messages to the correct component
+- Connection establishment and TLS handshake;
+- Automatic reconnection with exponential backoff after network outages;
+- Message queuing and delivery guarantees;
+- Routing incoming cloud messages to the correct component;
 
 This design ensures that connectivity logic is centralized in one place — any component can assume reliable message delivery without worrying about connection state.
 
@@ -391,9 +391,9 @@ The `agent,edge` role is assigned automatically by KubeEdge. The version differe
 
 KubeEdge's architecture is built around two main components:
 
-- **CloudCore** (cloud side): bridges the Kubernetes control plane and the edge nodes, synchronizing workloads (EdgeController) and IoT device state (DeviceController) via a secure WebSocket/QUIC tunnel.
+- **CloudCore** (cloud side): bridges the Kubernetes control plane and the edge nodes, synchronizing workloads (EdgeController) and IoT device state (DeviceController) via a secure WebSocket/QUIC tunnel;
 
-- **EdgeCore** (edge side): a lightweight agent that manages the full Pod lifecycle (Edged), caches all resource state for offline operation (MetaManager), implements the digital twin pattern for IoT devices (DeviceTwin), communicates with physical devices via MQTT (EventBus), and manages the cloud tunnel (EdgeHub).
+- **EdgeCore** (edge side): a lightweight agent that manages the full Pod lifecycle (Edged), caches all resource state for offline operation (MetaManager), implements the digital twin pattern for IoT devices (DeviceTwin), communicates with physical devices via MQTT (EventBus), and manages the cloud tunnel (EdgeHub);
 
 The result is a unified management plane where edge nodes behave as standard Kubernetes nodes from the operator's perspective, while internally providing the offline autonomy and IoT device management capabilities that standard Kubernetes lacks.
 
