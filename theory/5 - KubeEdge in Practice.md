@@ -2,13 +2,13 @@
 
 ## From theory to deployment
 
-The previous module described KubeEdge's architecture in terms of components and abstractions. This module focuses on what KubeEdge looks like in practice: how a deployment is structured, what the full synchronization flow looks like, what happens during a network outage, and how common real-world patterns are implemented.
+This module focuses on what KubeEdge looks like in practice: how a deployment is structured, what the full synchronization flow looks like, what happens during a network outage, and how common real-world patterns are implemented.
 
 All examples assume the following setup:
 
-- **Cloud node**: a VM running K3s as the Kubernetes control plane, with KubeEdge's CloudCore installed
-- **Edge node**: a second VM (simulating a remote edge device) running KubeEdge's EdgeCore
-- **Communication**: WebSocket tunnel between the two VMs over port 10000
+- **Cloud node**: a VM running K3s as the Kubernetes control plane, with KubeEdge's CloudCore installed;
+- **Edge node**: a second VM (simulating a remote edge device) running KubeEdge's EdgeCore;
+- **Communication**: WebSocket tunnel between the two VMs over port 10000;
 
 ---
 
@@ -39,8 +39,6 @@ A production KubeEdge deployment typically looks like this:
              |                                   |
        [ IoT Devices ]                   [ IoT Devices ]
 ```
-
-From the operator's perspective, all nodes — cloud and edge — are visible in a single `kubectl get nodes` view, and all workloads are managed with the same Kubernetes commands. The edge topology is completely transparent.
 
 ---
 
@@ -154,26 +152,24 @@ kubectl apply  →  API server (etcd)  →  EdgeController
 ```
 
 1. Operator applies a manifest via `kubectl` → the API server stores the desired state in etcd
-2. **EdgeController** detects the change and forwards the resource spec to the relevant edge node via the WebSocket tunnel
-3. **EdgeHub** on the edge node receives the message and routes it to the appropriate component
-4. **MetaManager** persists the resource spec in the local SQLite database
-5. **Edged** picks up the spec from MetaManager and acts on it (pull image, create container via containerd)
-6. Edged reports the Pod status back through EdgeHub → EdgeController → API server
-7. `kubectl get pods` reflects the updated status
-
-This entire loop typically completes in under 10 seconds for small images on a local network.
+2. **EdgeController** detects the change and forwards the resource spec to the relevant edge node via the WebSocket tunnel;
+3. **EdgeHub** on the edge node receives the message and routes it to the appropriate component;
+4. **MetaManager** persists the resource spec in the local SQLite database;
+5. **Edged** picks up the spec from MetaManager and acts on it (pull image, create container via containerd);
+6. Edged reports the Pod status back through EdgeHub → EdgeController → API server;
+7. `kubectl get pods` reflects the updated status;
 
 ---
 
 ## What happens during a network outage
 
-This is where KubeEdge's design pays off. When the WebSocket tunnel between EdgeCore and CloudCore is interrupted:
+When the WebSocket tunnel between EdgeCore and CloudCore is interrupted:
 
-1. **EdgeHub** detects the disconnection and begins buffering outgoing messages locally
-2. **Edged** continues managing running containers normally — it reads Pod specs from MetaManager's local cache, not from the cloud
-3. If a container crashes, **Edged** restarts it using the cached Pod spec — the cloud is not consulted
-4. **DeviceTwin** continues synchronizing device state locally, collecting sensor readings and maintaining the twin
-5. From the cloud side, the edge node transitions to `NotReady` after the heartbeat timeout (~40 seconds) — but its Pods are **not evicted**
+1. **EdgeHub** detects the disconnection and begins buffering outgoing messages locally;
+2. **Edged** continues managing running containers normally: it reads Pod specs from MetaManager's local cache, not from the cloud;
+3. If a container crashes, **Edged** restarts it using the cached Pod spec and the cloud is not consulted;
+4. **DeviceTwin** continues synchronizing device state locally, collecting sensor readings and maintaining the twin;
+5. From the cloud side, the edge node transitions to `NotReady` after the heartbeat timeout,  but its Pods are **not evicted**;
 
 ### Why are pods not evicted?
 
@@ -205,11 +201,11 @@ The workload continues serving traffic locally, completely unaffected by the clo
 
 When connectivity is restored:
 
-1. **EdgeHub** re-establishes the WebSocket tunnel to CloudCore (with exponential backoff)
-2. **MetaManager** flushes its queued outgoing messages to CloudCore
-3. **EdgeController** compares the edge state with the desired state stored in etcd
-4. Any divergences are reconciled: missing resources are re-deployed, stale configurations are updated, deleted resources are removed
-5. Pod statuses are written back to the API server — `kubectl get pods` becomes accurate again
+1. **EdgeHub** re-establishes the WebSocket tunnel to CloudCore;
+2. **MetaManager** flushes its queued outgoing messages to CloudCore;
+3. **EdgeController** compares the edge state with the desired state stored in etcd;
+4. Any divergences are reconciled: missing resources are re-deployed, stale configurations are updated, deleted resources are removed;
+5. Pod statuses are written back to the API server — `kubectl get pods` becomes accurate again;
 
 ```bash
 # Watch the edge node return to Ready
@@ -382,22 +378,6 @@ sudo crictl pods
 sudo crictl inspectp <pod-id>
 ```
 
-### Simulating a network outage (for testing)
-
-```bash
-# Block all outbound traffic to the cloud node (edge-node → cloud-node)
-sudo iptables -A OUTPUT -d 192.168.1.10 -j DROP
-
-# Observe: node transitions to NotReady after ~40 seconds
-watch kubectl get nodes
-
-# Restore connectivity
-sudo iptables -D OUTPUT -d 192.168.1.10 -j DROP
-
-# Observe: node transitions back to Ready, reconciliation occurs
-watch kubectl get nodes
-```
-
 ---
 
 ## Common patterns
@@ -414,34 +394,9 @@ Sensor  →  MQTT PUBLISH  →  EventBus  →  DeviceTwin (reported state)
                                      Cloud storage / analytics
 ```
 
-Local aggregation (e.g., computing a 1-minute average before sending) reduces cloud bandwidth usage by orders of magnitude compared to sending every raw reading.
+Local aggregation reduces cloud bandwidth usage by orders of magnitude compared to sending every raw reading.
 
-### Pattern 2 — Local inference with cloud training
-
-A machine learning model is trained in the cloud and deployed as a container image to edge nodes. Inference runs locally for low latency. Only anomaly events — not the full sensor stream — are sent to the cloud for further analysis and model retraining.
-
-```
-Cloud:  train model  →  push image to registry  →  schedule Deployment on edge nodes
-Edge:   pull image   →  run inference locally   →  send anomalies to cloud
-Cloud:  collect anomalies  →  retrain model  →  push updated image  →  (repeat)
-```
-
-This pattern keeps latency-sensitive decisions at the edge while leveraging cloud computing power for training. KubeEdge's standard Deployment model and offline autonomy make the rollout and continuous update cycle straightforward.
-
-### Pattern 3 — Configuration rollout to offline nodes
-
-An operator updates a ConfigMap in the cloud to change application behavior (e.g., update a detection threshold or a feature flag). KubeEdge propagates the change to all connected edge nodes immediately, and queues it for nodes that are currently offline — they receive the update automatically when they reconnect.
-
-```bash
-# Update a ConfigMap from the cloud
-kubectl edit configmap app-config
-
-# Connected edge nodes receive the update in seconds.
-# Offline edge nodes receive it upon reconnection.
-# No operator intervention or manual synchronization needed.
-```
-
-### Pattern 4 — GitOps at the edge
+### Pattern 2 — GitOps at the edge
 
 KubeEdge integrates naturally with GitOps tools (ArgoCD, Flux) because it reuses the standard Kubernetes API. A GitOps pipeline that manages cloud workloads can be extended to manage edge workloads simply by adding edge-targeted manifests to the Git repository.
 
@@ -465,12 +420,10 @@ The entire GitOps flow works without modification. Edge nodes are just another s
 
 In practice, KubeEdge delivers on its architectural promises:
 
-- **Workload deployment** uses standard `kubectl` and YAML manifests — no new tools to learn, existing GitOps pipelines work unchanged
-- **Offline operation** is transparent: edge workloads continue running during cloud outages, pods are never evicted, state is automatically reconciled on reconnection
-- **IoT device management** uses Kubernetes-native custom resources (DeviceModel, Device) that integrate cleanly into existing workflows
-- **Observability** relies on standard Kubernetes tooling, supplemented by direct log inspection on the edge node via `journalctl` and `crictl`
-
-The practical result is a unified management plane that treats cloud VMs and remote IoT gateways as first-class citizens of the same cluster — with the edge layer being genuinely autonomous when needed.
+- **Workload deployment** uses standard `kubectl` and YAML manifests — no new tools to learn, existing GitOps pipelines work unchanged;
+- **Offline operation** is transparent: edge workloads continue running during cloud outages, pods are never evicted, state is automatically reconciled on reconnection;
+- **IoT device management** uses Kubernetes-native custom resources (DeviceModel, Device) that integrate cleanly into existing workflows;
+- **Observability** relies on standard Kubernetes tooling, supplemented by direct log inspection on the edge node via `journalctl` and `crictl`;
 
 ---
 
