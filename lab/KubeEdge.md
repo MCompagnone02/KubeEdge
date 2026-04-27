@@ -21,10 +21,8 @@ Each lab builds on the previous one. By the end, you will have experienced the f
 | Internet access on both VMs | — |
 
 Throughout this lab:
-- **`cloud-node`** refers to the VM running K3s and CloudCore (IP: `192.168.1.10`)
-- **`edge-node`** refers to the VM running EdgeCore (IP: `192.168.1.20`)
-
-> **Tip**: if you are using a different network range, replace `192.168.1.10` and `192.168.1.20` throughout with your actual IPs. The two VMs must be able to reach each other on port 10000/TCP.
+- **`cloud-node`** refers to the VM running K3s and CloudCore (IP: `192.168.1.10`);
+- **`edge-node`** refers to the VM running EdgeCore (IP: `192.168.1.20`);
 
 ---
 
@@ -56,7 +54,7 @@ sudo chown $(id -u):$(id -g) ~/.kube/config
 kubectl cluster-info
 ```
 
-> **What happened**: K3s started a single-node Kubernetes cluster using SQLite as the data store. The kubeconfig was copied to `~/.kube/config` so `kubectl` can find it without specifying `--kubeconfig` on every command.
+K3s started a single-node Kubernetes cluster using SQLite as the data store. The kubeconfig was copied to `~/.kube/config` so `kubectl` can find it without specifying `--kubeconfig` on every command.
 
 ### 1.2 Install keadm on both nodes
 
@@ -104,7 +102,7 @@ keadm gettoken --kube-config=/root/.kube/config
 # eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...   ← copy this value
 ```
 
-> **About the token**: this is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS using the issued certificate — the token is not needed again.
+This is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS using the issued certificate — the token is not needed again.
 
 ### 1.4 Join the edge node to the cluster
 
@@ -141,8 +139,6 @@ kubectl get nodes
 ```
 
 The `agent,edge` role confirms that the node is managed by KubeEdge. Note the version difference: EdgeCore reports a lower version (`v1.13.x`) because Edged implements only the subset of the kubelet API relevant to edge operation.
-
-**Lab 1 complete.** You now have a functional KubeEdge cluster with one cloud node and one edge node.
 
 ---
 
@@ -270,9 +266,7 @@ curl http://10.42.1.10:80
 # ...
 ```
 
-**What to observe**: the container is running on the edge node, but it was scheduled entirely from the cloud using standard `kubectl apply`. From the cloud's perspective this is no different from deploying to any other Kubernetes node. From the edge's perspective, Edged is managing the container locally via containerd.
-
-**Lab 2 complete.** You have deployed and verified a workload on the edge node.
+The container is running on the edge node, but it was scheduled entirely from the cloud using standard `kubectl apply`. From the cloud's perspective this is no different from deploying to any other Kubernetes node. From the edge's perspective, Edged is managing the container locally via containerd.
 
 ---
 
@@ -324,7 +318,7 @@ kubectl get pods -o wide
 # nginx-edge-7d6f9b8c4-xk2p9   1/1     Unknown   edge-node
 ```
 
-> **Important**: the Pod status shows `Unknown` — not `Terminating` or `Error`. This is deliberate: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes, so pods are never evicted. The cloud simply cannot verify the edge state while disconnected.
+The Pod status shows `Unknown` — not `Terminating` or `Error`. This is deliberate: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes, so pods are never evicted. The cloud simply cannot verify the edge state while disconnected.
 
 ### 3.4 Verify the workload is still running at the edge
 
@@ -423,7 +417,7 @@ kubectl get pods
 | Lab 2 | Workload scheduled from cloud runs on edge node; verified with `kubectl` and `crictl` | Edged, MetaManager |
 | Lab 3 | Network outage: edge workload keeps running; container restart from cache; automatic reconciliation | MetaManager, Edged, EdgeHub |
 
-These three labs cover the full lifecycle of a KubeEdge deployment: setup, workload management, and fault tolerance — the three properties that distinguish KubeEdge from a standard Kubernetes installation.
+These three labs cover the full lifecycle of a KubeEdge deployment: setup, workload management, and fault tolerance. The three properties that distinguish KubeEdge from a standard Kubernetes installation.
 
 ---
 
@@ -439,20 +433,6 @@ These three labs cover the full lifecycle of a KubeEdge deployment: setup, workl
 | `keadm join` fails with "certificate verification" | Time drift between VMs | Sync clocks: `sudo timedatectl set-ntp true` on both VMs |
 | Pod shows `Unknown` status from cloud | Expected during outage | This is correct behavior; status resolves when connectivity is restored |
 | EdgeCore service not starting after reboot | Service not enabled | Run `sudo systemctl enable edgecore` |
-
----
-
-## Further exploration
-
-After completing the three labs, consider these extensions:
-
-1. **Add a second edge node** — repeat steps 1.4 and 1.5 with a third VM, then deploy the nginx workload to both edge nodes using a `DaemonSet` instead of a `Deployment`
-
-2. **Deploy a DeviceModel and Device** — apply the YAML manifests from [5 - KubeEdge in Practice](../theory/5%20-%20KubeEdge%20in%20Practice.md) and observe the twin state with `kubectl get device -o yaml`
-
-3. **Explore EdgeCore configuration** — inspect `/etc/kubeedge/config/edgecore.yaml` on the edge node; note the MetaManager SQLite path, the MQTT broker address, and the CloudCore endpoint
-
-4. **Monitor with Prometheus** — KubeEdge exposes metrics endpoints on both CloudCore and EdgeCore; configure a Prometheus scrape target to collect them
 
 ---
 
