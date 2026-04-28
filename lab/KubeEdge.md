@@ -4,11 +4,11 @@
 
 This lab walks through a complete KubeEdge setup on two local VMs, simulating a minimal cloud-to-edge deployment. It is structured as three progressive exercises:
 
-- **Lab 1** — Set up the environment (K3s + KubeEdge)
-- **Lab 2** — Deploy a workload to the edge node
-- **Lab 3** — Simulate a network outage and observe offline resilience
+- **Lab 1** — Set up the environment (K3s + KubeEdge);
+- **Lab 2** — Deploy a workload to the edge node;
+- **Lab 3** — Simulate a network outage and observe offline resilience;
 
-Each lab builds on the previous one. By the end, you will have experienced the full lifecycle of a KubeEdge deployment: cluster setup, workload management, and fault tolerance.
+Each lab builds on the previous one.
 
 ### Prerequisites
 
@@ -32,7 +32,7 @@ Throughout this lab:
 
 ### 1.1 Install K3s on the cloud node
 
-K3s provides the lightweight Kubernetes control plane on the cloud side. We disable Traefik (the default ingress controller) since we don't need it here.
+K3s provides the lightweight Kubernetes control plane on the cloud side.
 
 ```bash
 # Run on: cloud-node
@@ -138,7 +138,7 @@ kubectl get nodes
 # edge-node     Ready    agent,edge     1m    v1.13.x
 ```
 
-The `agent,edge` role confirms that the node is managed by KubeEdge. Note the version difference: EdgeCore reports a lower version (`v1.13.x`) because Edged implements only the subset of the kubelet API relevant to edge operation.
+The `agent,edge` role confirms that the node is managed by KubeEdge.
 
 ---
 
