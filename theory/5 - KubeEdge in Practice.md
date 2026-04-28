@@ -428,4 +428,4 @@ In practice, KubeEdge delivers on its architectural promises:
 ---
 
 *Previous: [4 - KubeEdge Architecture](./4%20-%20KubeEdge%20Architecture.md)*  
-*Next: [KubeEdge)](../lab/%20KubeEdge%20).md)*
+*Next: [KubeEdge)](../lab/%20KubeEdge%20.md)*
