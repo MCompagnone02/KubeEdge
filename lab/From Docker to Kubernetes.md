@@ -445,5 +445,4 @@ The core recipe is always the same:
 
 ---
 
-*Previous: [From Docker to Kubernetes (Lab 0)](./1.1%20-%20From%20Docker%20to%20Kubernetes.md)*  
-*Next: [KubeEdge Lab](./6%20-%20KubeEdge%20(Lab).md)*
+*Next: [KubeEdge](./KubeEdge.md)*
