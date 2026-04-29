@@ -436,4 +436,4 @@ These three labs cover the full lifecycle of a KubeEdge deployment: setup, workl
 
 ---
 
-*Previous: [5 - KubeEdge in Practice](../theory/5%20-%20KubeEdge%20in%20Practice.md)*
+*Next: [KubeEdge](./KubeEdge.md)*
