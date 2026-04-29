@@ -8,7 +8,7 @@ Several projects extend Kubernetes for edge environments. Each makes different t
 
 ## K3s
 
-**K3s** is a lightweight, fully conformant Kubernetes distribution created by Rancher (now part of SUSE). Its goal is to reduce the resource requirements of a standard Kubernetes installation while maintaining full API compatibility.
+**K3s** is a lightweight, fully conformant Kubernetes distribution created by Rancher. Its goal is to reduce the resource requirements of a standard Kubernetes installation while maintaining full API compatibility.
 
 K3s packages the entire control plane into a **single binary**, replacing or removing several heavy components:
 
@@ -59,7 +59,7 @@ curl -sfL https://get.k3s.io | K3S_URL=https://<server>:6443 \
 
 ## MicroK8s
 
-**MicroK8s** is a lightweight Kubernetes distribution developed and maintained by Canonical (the company behind Ubuntu). It is designed for developer workstations, CI/CD pipelines, and small-scale edge deployments.
+**MicroK8s** is a lightweight Kubernetes distribution designed for developer workstations, CI/CD pipelines, and small-scale edge deployments.
 
 MicroK8s is distributed as a **snap package** (canonical's containerized software packaging format). This means it installs in strict isolation from the host system and updates automatically through the snap store without disrupting the running cluster.
 
