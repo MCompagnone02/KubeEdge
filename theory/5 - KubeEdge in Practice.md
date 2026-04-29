@@ -151,7 +151,7 @@ kubectl apply  →  API server (etcd)  →  EdgeController
                                       API server (status update)
 ```
 
-1. Operator applies a manifest via `kubectl` → the API server stores the desired state in etcd
+1. Operator applies a manifest via `kubectl` → the API server stores the desired state in etcd;
 2. **EdgeController** detects the change and forwards the resource spec to the relevant edge node via the WebSocket tunnel;
 3. **EdgeHub** on the edge node receives the message and routes it to the appropriate component;
 4. **MetaManager** persists the resource spec in the local SQLite database;
@@ -221,112 +221,6 @@ kubectl get pods -o wide
 ```
 
 This reconciliation is **fully automatic** and requires no operator intervention.
-
----
-
-## Managing IoT devices
-
-KubeEdge's device management flow involves three steps: defining a DeviceModel, registering a Device instance, and reading/writing device state from the cloud.
-
-### Step 1 — Define a DeviceModel
-
-```yaml
-# devicemodel-thermometer.yaml
-apiVersion: devices.kubeedge.io/v1alpha2
-kind: DeviceModel
-metadata:
-  name: thermometer
-  namespace: default
-spec:
-  properties:
-    - name: temperature
-      description: Temperature reading from the sensor
-      type:
-        float:
-          accessMode: ReadOnly
-          unit: Celsius
-    - name: unit
-      description: Display unit (C or F)
-      type:
-        string:
-          accessMode: ReadWrite
-          defaultValue: "C"
-    - name: alarm-enabled
-      description: Whether the over-temperature alarm is active
-      type:
-        boolean:
-          accessMode: ReadWrite
-          defaultValue: "true"
-```
-
-### Step 2 — Register a Device instance
-
-```yaml
-# device-thermometer-01.yaml
-apiVersion: devices.kubeedge.io/v1alpha2
-kind: Device
-metadata:
-  name: thermometer-01
-  namespace: default
-spec:
-  deviceModelRef:
-    name: thermometer
-  nodeSelector:
-    nodeSelectorTerms:
-      - matchExpressions:
-          - key: kubernetes.io/hostname
-            operator: In
-            values:
-              - edge-node-01
-```
-
-```bash
-kubectl apply -f devicemodel-thermometer.yaml
-kubectl apply -f device-thermometer-01.yaml
-
-# Verify
-kubectl get device -n default
-# NAME               AGE
-# thermometer-01     30s
-```
-
-### Step 3 — Read device state from the cloud
-
-```bash
-kubectl get device thermometer-01 -o yaml
-
-# Status section shows the twin state:
-# status:
-#   twins:
-#     - propertyName: temperature
-#       reported:
-#         value: "22.7"
-#         metadata:
-#           timestamp: "1704067200"
-#     - propertyName: unit
-#       desired:
-#         value: "C"
-#       reported:
-#         value: "C"
-#     - propertyName: alarm-enabled
-#       desired:
-#         value: "true"
-#       reported:
-#         value: "true"
-```
-
-### Step 4 — Update device configuration from the cloud
-
-```bash
-# Change the display unit to Fahrenheit
-kubectl patch device thermometer-01 --type=merge \
-  -p '{"status":{"twins":[{"propertyName":"unit","desired":{"value":"F"}}]}}'
-
-# DeviceTwin on edge-node-01 will:
-# 1. Detect the desired state change
-# 2. Publish the new configuration to the physical device via MQTT
-# 3. Update the reported state once the device acknowledges it
-```
 
 ---
 
