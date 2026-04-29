@@ -12,36 +12,6 @@ All examples assume the following setup:
 
 ---
 
-## Typical deployment topology
-
-A production KubeEdge deployment typically looks like this:
-
-```
-                       [ Internet / WAN ]
-                               |
-                  +------------+------------+
-                  |       Cloud Node        |
-                  |  K3s control plane      |
-                  |  CloudCore (port 10000) |
-                  |  kubectl access         |
-                  +------------+------------+
-                               |
-                WebSocket tunnel (port 10000)
-                               |
-             +-----------------+-----------------+
-             |                                   |
-  +----------+------+               +------------+------+
-  |  Edge Node 01   |               |  Edge Node 02     |
-  |  EdgeCore       |               |  EdgeCore         |
-  |  nginx workload |               |  sensor app       |
-  |  temp-sensor    |               |  camera feed      |
-  +-----------------+               +-------------------+
-             |                                   |
-       [ IoT Devices ]                   [ IoT Devices ]
-```
-
----
-
 ## Deploying a workload to the edge
 
 Deploying an application to an edge node in KubeEdge is identical to deploying to any Kubernetes node. The only additions are a `nodeSelector` (or `nodeAffinity`) to target the edge node and a `toleration` for the edge taint.
