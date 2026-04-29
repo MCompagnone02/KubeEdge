@@ -61,7 +61,7 @@ kube-apiserver  →  EdgeController  →  EdgeCore (edge node)
      └────────────── status updates ─────────┘
 ```
 
-The EdgeController tracks which resources belong to which edge node using standard Kubernetes labels and node selectors — no special routing configuration is needed.
+The EdgeController tracks which resources belong to which edge node using standard Kubernetes labels and node selectors; no special routing configuration is needed.
 
 #### DeviceController
 
@@ -164,21 +164,21 @@ During outage:
 When connectivity is restored, MetaManager synchronizes its state with CloudCore and flushes its outgoing queue. This reconciliation is automatic and transparent to running workloads.
 
 **What MetaManager stores locally:**
-- Pod specs (so containers can be restarted without cloud access)
-- ConfigMaps and Secrets (so applications have their configuration)
-- Node status updates (queued for delivery when the tunnel recovers)
-- Device twin state (replicated from DeviceTwin)
+- Pod specs (so containers can be restarted without cloud access);
+- ConfigMaps and Secrets (so applications have their configuration);
+- Node status updates (queued for delivery when the tunnel recovers);
+- Device twin state (replicated from DeviceTwin);
 
 #### DeviceTwin
 
 DeviceTwin implements the **digital twin pattern** for IoT devices. For each physical device connected to the edge node, DeviceTwin maintains a lightweight in-memory and on-disk representation with two halves:
 
 ```
-Cloud (desired state: "alarm-threshold = 75.0°C")
+Cloud (desired state)
          ↓
     DeviceTwin
     ↙          ↖
-Physical device    (reported state: "current temp = 23.4°C, threshold = 75.0°C")
+Physical device    (reported state)
 ```
 
 - **Desired state**: the configuration pushed from the cloud;
@@ -186,7 +186,7 @@ Physical device    (reported state: "current temp = 23.4°C, threshold = 75.0°C
 
 DeviceTwin continuously works to reconcile the two, pushing configuration updates to the device via EventBus (MQTT) and collecting sensor readings to report back to the cloud.
 
-**Why this pattern matters**: it decouples the cloud's management logic from the physical device's real-time behavior. The cloud sets intentions; DeviceTwin handles the low-level protocol details and the reconciliation loop. Device state is persisted locally, so configurations survive edge node restarts and network outages.
+This pattern decouples the cloud's management logic from the physical device's real-time behavior. The cloud sets intentions; DeviceTwin handles the low-level protocol details and the reconciliation loop. Device state is persisted locally, so configurations survive edge node restarts and network outages.
 
 #### EventBus
 
@@ -201,10 +201,6 @@ EventBus can operate in two modes:
 Physical device  →  MQTT PUBLISH  →  EventBus  →  DeviceTwin  →  Cloud
 Physical device  ←  MQTT SUBSCRIBE ←  EventBus  ←  DeviceTwin  ←  Cloud
 ```
-
-The MQTT topic naming convention follows the KubeEdge device model:
-- `$ke/events/device/<device-id>/data/update` — device publishes readings
-- `$ke/events/device/<device-id>/twin/update` — twin state updates
 
 #### EdgeHub
 
@@ -302,7 +298,7 @@ status:
         value: "5000"          # device has not yet applied the change (transitioning)
 ```
 
-The `desired != reported` state for `sampling-interval` above represents a device that is in the process of applying a configuration change — DeviceTwin will keep retrying until the reported state converges.
+The `desired != reported` state for `sampling-interval` above represents a device that is in the process of applying a configuration change: DeviceTwin will keep retrying until the reported state converges.
 
 ---
 
@@ -345,11 +341,11 @@ spec:
               cpu: "1"
 ```
 
-This means that existing Kubernetes tooling — Helm charts, GitOps pipelines, `kubectl` — works without modification for edge workloads. The operator's mental model remains the same.
+This means that existing Kubernetes tooling, such as Helm charts, GitOps pipelines, `kubectl`, work without modification for edge workloads.
 
 ### The edge node taint
 
-KubeEdge automatically taints edge nodes with `node-role.kubernetes.io/edge:NoSchedule` when they join the cluster. This prevents the Kubernetes scheduler from accidentally placing cloud-only workloads (e.g., monitoring agents, ingress controllers) on edge nodes. Workloads explicitly intended for edge nodes must add the matching toleration.
+KubeEdge automatically taints edge nodes with `node-role.kubernetes.io/edge:NoSchedule` when they join the cluster. This prevents the Kubernetes scheduler from accidentally placing cloud-only workloads on edge nodes. Workloads explicitly intended for edge nodes must add the matching toleration.
 
 ---
 
@@ -383,7 +379,7 @@ cloud-node      Ready    control-plane  10d   v1.27.0
 edge-node-01    Ready    agent,edge     2d    v1.13.0
 ```
 
-The `agent,edge` role is assigned automatically by KubeEdge. The version difference (`v1.27.0` vs `v1.13.0`) reflects the internal version reported by Edged, which is intentionally lower — Edged implements only the subset of the kubelet API relevant to edge operation.
+The `agent,edge` role is assigned automatically by KubeEdge. The version difference (`v1.27.0` vs `v1.13.0`) reflects the internal version reported by Edged, which is intentionally lower; Edged implements only the subset of the kubelet API relevant to edge operation.
 
 ---
 
@@ -393,7 +389,7 @@ KubeEdge's architecture is built around two main components:
 
 - **CloudCore** (cloud side): bridges the Kubernetes control plane and the edge nodes, synchronizing workloads (EdgeController) and IoT device state (DeviceController) via a secure WebSocket/QUIC tunnel;
 
-- **EdgeCore** (edge side): a lightweight agent that manages the full Pod lifecycle (Edged), caches all resource state for offline operation (MetaManager), implements the digital twin pattern for IoT devices (DeviceTwin), communicates with physical devices via MQTT (EventBus), and manages the cloud tunnel (EdgeHub);
+- **EdgeCore** (edge side): a lightweight agent that manages the full Pod lifecycle (Edged), caches all resource state for offline operation (MetaManager), implements the digital twin pattern for IoT devices (DeviceTwin), communicates with physical devices via MQTT (EventBus) and manages the cloud tunnel (EdgeHub);
 
 The result is a unified management plane where edge nodes behave as standard Kubernetes nodes from the operator's perspective, while internally providing the offline autonomy and IoT device management capabilities that standard Kubernetes lacks.
 
