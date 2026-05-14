@@ -1,21 +1,25 @@
 ```bash
 # Mostra il cluster
 kubectl get nodes
+```
 
 ```bash
 # Mostra CloudCore in esecuzione
 kubectl get pods -n kubeedge
+```
 
 ```bash
 # Deploya nginx sull'edge
 kubectl apply -f deployment-nginx.yaml
 kubectl get pods -o wide -w
+```
 
 ```bash
 # Verifica locale sull'edge
 # (passare alla finestra edge-node)
 sudo ctr -n k8s.io containers ls
 curl http://<POD-IP>:80
+```
 
 ```bash
 # Simula outage
@@ -25,12 +29,14 @@ sudo iptables -A OUTPUT -d <IP-CLOUD-NODE> -j DROP
 # cloud-node — aspetta 40s
 watch kubectl get nodes   # edge-node → NotReady
 kubectl get pods -o wide  # status Unknown / Running in cache
+```
 
 ```bash
 # Dimostra autonomia edge durante outage
 # (dall'edge-node — nonostante la connessione sia tagliata)
 sudo ctr -n k8s.io containers ls   # nginx ancora Running
 curl http://<POD-IP>:80            # nginx risponde
+```
 
 ```bash
 # Ripristina e mostra riconciliazione
@@ -39,6 +45,7 @@ sudo iptables -D OUTPUT -d <IP-CLOUD-NODE> -j DROP
 
 # (sul cloud-node)
 watch kubectl get nodes   # edge-node → Ready in ~10s automaticamente
+```
 
 ```bash
 # Comandi di troubleshooting utili
@@ -54,3 +61,4 @@ kubectl get pods -n kubeedge        # cloud-node
 
 # Riavvio EdgeCore se necessario
 sudo systemctl restart edgecore
+```
