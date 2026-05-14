@@ -1,0 +1,65 @@
+Mostra il cluster
+kubectl get nodes
+# Spiega: due nodi, versioni diverse, edge-node ha ruolo agent,edge
+
+2. Mostra CloudCore in esecuzione
+kubectl get pods -n kubeedge
+# Spiega: CloudCore = EdgeController + DeviceController
+# Gestisce la comunicazione con tutti gli edge-node via WebSocket tunnel
+
+3. Deploya nginx sull'edge
+kubectl apply -f deployment-nginx.yaml
+kubectl get pods -o wide -w
+# Spiega: schedulato dal cloud con kubectl standard,
+# ma il container gira localmente sull'edge gestito da Edged
+
+4. Verifica locale sull'edge
+# Passa alla finestra edge-node
+sudo ctr -n k8s.io containers ls
+curl http://<POD-IP>:80
+# Spiega: Edged + containerd gestiscono il container localmente,
+# il cloud non è necessario per mantenerlo in esecuzione
+
+5. Simula outage
+# edge-node
+sudo iptables -A OUTPUT -d <IP-CLOUD-NODE> -j DROP
+
+# cloud-node — aspetta 40s
+watch kubectl get nodes   # edge-node → NotReady
+kubectl get pods -o wide  # status Unknown / Running in cache
+
+# Spiega: il cloud non può verificare l'edge ma NON evict i pod
+# KubeEdge imposta tolerationSeconds = infinito sugli edge-node
+
+6. Dimostra autonomia edge durante outage
+# edge-node — nonostante la connessione sia tagliata
+sudo ctr -n k8s.io containers ls   # nginx ancora Running
+curl http://<POD-IP>:80            # nginx risponde
+
+# Spiega: MetaManager ha in cache il Pod spec in SQLite locale.
+# Edged legge da questa cache, non dal cloud.
+
+7. Ripristina e mostra riconciliazione
+# edge-node
+sudo iptables -D OUTPUT -d <IP-CLOUD-NODE> -j DROP
+
+# cloud-node
+watch kubectl get nodes   # edge-node → Ready in ~10s automaticamente
+
+# Spiega: EdgeHub ha re-stabilito il tunnel WebSocket,
+# MetaManager ha inviato gli aggiornamenti di stato in coda,
+# nessun intervento manuale necessario
+
+Comandi di troubleshooting utili
+# Logs EdgeCore (edge-node)
+sudo journalctl -u edgecore.service --since '5 minutes ago'
+
+# Logs CloudCore (cloud-node)
+kubectl logs -n kubeedge -l app=cloudcore --tail=20
+
+# Stato servizi
+sudo systemctl status edgecore      # edge-node
+kubectl get pods -n kubeedge        # cloud-node
+
+# Riavvio EdgeCore se necessario
+sudo systemctl restart edgecore
