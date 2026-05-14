@@ -1,4 +1,14 @@
 ```bash
+# PowerShell — avvia le VM (se erano sospese)
+multipass start cloud-node
+multipass start edge-node
+multipass list   # verifica che siano Running
+
+# Entra nel cloud-node
+multipass shell cloud-node
+```
+
+```bash
 # Mostra il cluster
 kubectl get nodes
 ```
