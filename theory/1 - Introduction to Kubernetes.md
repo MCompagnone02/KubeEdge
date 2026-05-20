@@ -16,7 +16,7 @@ Understanding why Kubernetes exists requires a look at how software deployment h
 
 3. **Containers**: Docker popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network;
 
-4. **Container orchestration**: this is the problem that Kubernetes solves, because running hundreds of containers across multiple machines, with load balancing, health checks, and rolling updates, isn't easy;
+4. **Container orchestration**: this is the problem that Kubernetes solves, because running hundreds of containers across multiple machines, with load balancing, health checks, and rolling updates;
 
 ---
 
