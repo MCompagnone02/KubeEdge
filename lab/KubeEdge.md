@@ -1,5 +1,5 @@
 # KubeEdge Lab
-## Complete Guide — Setup, Execution, Errors and Fixes
+## Setup, Execution, Errors and Fixes
 *Distributed Edge Programming | Mattia Compagnone*
 
 ---
@@ -24,7 +24,7 @@ multipass launch 22.04 --name edge-node  --cpus 1 --memory 2G --disk 10G
 multipass list
 ```
 
-> **Note** — Write down the IPv4 of cloud-node (e.g. `172.26.39.147`). You will use this IP in all subsequent commands.
+**Note**: write down the IPv4 of cloud-node (e.g. `172.26.39.147`). You will use this IP in all subsequent commands.
 
 **Transferring files to the VMs**
 
@@ -52,8 +52,8 @@ multipass shell cloud-node
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -
 ```
 
-> **Error**: `Unable to read /etc/rancher/k3s/k3s.yaml — permission denied`
-> **Fix**: `sudo chmod 644 /etc/rancher/k3s/k3s.yaml`
+**Error**: `Unable to read /etc/rancher/k3s/k3s.yaml — permission denied`
+**Fix**: `sudo chmod 644 /etc/rancher/k3s/k3s.yaml`
 
 After the fix, configure kubectl:
 
