@@ -1,7 +1,7 @@
 # KubeEdge Lab
 ---
 
-## 0. Prerequisites: Multipass Setup
+## Prerequisites: Multipass Setup
 
 Multipass creates lightweight Ubuntu VMs on Windows without manually configuring VirtualBox. It is the simplest way to simulate two Linux machines on the same laptop.
 
