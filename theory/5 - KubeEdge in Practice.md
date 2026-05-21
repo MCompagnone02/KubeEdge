@@ -1,15 +1,5 @@
 # KubeEdge in Practice
 
-## From theory to deployment
-
-This module focuses on what KubeEdge looks like in practice: how a deployment is structured, what the full synchronization flow looks like, what happens during a network outage, and how common real-world patterns are implemented.
-
-All examples assume the following setup:
-
-- **Cloud node**: a VM running K3s as the Kubernetes control plane, with KubeEdge's CloudCore installed;
-- **Edge node**: a second VM (simulating a remote edge device) running KubeEdge's EdgeCore;
-- **Communication**: WebSocket tunnel between the two VMs over port 10000;
-
 ---
 
 ## Deploying a workload to the edge
