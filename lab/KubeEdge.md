@@ -1,442 +1,322 @@
-# KubeEdge (Lab)
-
-## Overview
-
-This lab walks through a complete KubeEdge setup on two local VMs, simulating a minimal cloud-to-edge deployment. It is structured as three progressive exercises:
-
-- **Lab 1** — Set up the environment (K3s + KubeEdge);
-- **Lab 2** — Deploy a workload to the edge node;
-- **Lab 3** — Simulate a network outage and observe offline resilience;
-
-Each lab builds on the previous one.
-
-### Prerequisites
-
-| Requirement | Version |
-|-------------|---------|
-| Two Linux VMs (Ubuntu 22.04 recommended) | — |
-| containerd | ≥ 1.6 |
-| kubectl | ≥ 1.27 |
-| keadm | ≥ 1.15 |
-| Internet access on both VMs | — |
-
-Throughout this lab:
-- **`cloud-node`** refers to the VM running K3s and CloudCore (IP: `192.168.1.10`);
-- **`edge-node`** refers to the VM running EdgeCore (IP: `192.168.1.20`);
+# KubeEdge Lab
+## Guida Completa — Setup, Esecuzione, Errori e Soluzioni
+*Distributed Edge Programming | Mattia Compagnone*
 
 ---
 
-## Lab 1 — Environment setup
+## 0. Prerequisiti — Installazione Multipass
 
-**Objective**: install K3s on the cloud node, install KubeEdge's CloudCore on the cloud node, and join the edge node to the cluster.
+Multipass crea VM Ubuntu leggere su Windows senza configurare VirtualBox a mano. È il modo più semplice per simulare due macchine Linux sullo stesso portatile.
 
-### 1.1 Install K3s on the cloud node
+**Installazione**
 
-K3s provides the lightweight Kubernetes control plane on the cloud side.
+Scarica l'installer `.exe` da [multipass.run](https://multipass.run) e installalo. Richiede Windows 10/11 con Hyper-V (Pro/Education) oppure VirtualBox (Home).
+
+**Creazione delle VM**
+
+Apri PowerShell come Amministratore ed esegui:
+
+```powershell
+multipass launch 22.04 --name cloud-node --cpus 2 --memory 2G --disk 10G
+multipass launch 22.04 --name edge-node  --cpus 1 --memory 2G --disk 10G
+
+# Verifica che siano Running e annota gli IP
+multipass list
+```
+
+> **ℹ Info** — Annota l'IPv4 di cloud-node (es. `172.26.39.147`). Userai questo IP in tutti i comandi successivi.
+
+**Trasferimento file nelle VM**
+
+A causa di caratteri speciali nel percorso (°, apostrofi), copia prima i file in `C:\temp\` poi trasferiscili:
+
+```powershell
+New-Item -ItemType Directory -Force -Path C:\temp
+Copy-Item 'C:\...\KubeEdge\setup-cloud.sh' C:\temp\setup-cloud.sh
+Copy-Item 'C:\...\KubeEdge\setup-edge.sh'  C:\temp\setup-edge.sh
+
+multipass transfer C:\temp\setup-cloud.sh cloud-node:/home/ubuntu/setup-cloud.sh
+multipass transfer C:\temp\setup-edge.sh  edge-node:/home/ubuntu/setup-edge.sh
+```
+
+---
+
+## Lab 1 — Setup del Cluster KubeEdge
+
+**Obiettivo**: installare K3s sulla cloud-node, avviare CloudCore, unire l'edge-node al cluster.
+
+### 1.1 Installazione K3s sulla cloud-node
 
 ```bash
-# Run on: cloud-node
+multipass shell cloud-node
 
-# Install K3s
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik" sh -
+# Installa K3s (disabilita Traefik, non necessario)
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -
+```
 
-# Verify the cluster is up
-kubectl get nodes
-# NAME         STATUS   ROLES                  AGE   VERSION
-# cloud-node   Ready    control-plane,master   1m    v1.27.x
+> **❌ Errore**: `Unable to read /etc/rancher/k3s/k3s.yaml — permission denied`
+> **✅ Fix**: `sudo chmod 644 /etc/rancher/k3s/k3s.yaml`
 
-# Copy kubeconfig to the standard location
-sudo mkdir -p ~/.kube
+Dopo il fix, configura kubectl:
+
+```bash
+mkdir -p ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
+sudo chmod 644 /etc/rancher/k3s/k3s.yaml
 
-# Verify kubectl works
-kubectl cluster-info
-```
-
-K3s started a single-node Kubernetes cluster using SQLite as the data store. The kubeconfig was copied to `~/.kube/config` so `kubectl` can find it without specifying `--kubeconfig` on every command.
-
-### 1.2 Install keadm on both nodes
-
-`keadm` is the KubeEdge installation and cluster management CLI.
-
-```bash
-# Run on: cloud-node AND edge-node
-
-export KUBEEDGE_VERSION=v1.15.0
-
-# Download the keadm archive
-wget https://github.com/kubeedge/kubeedge/releases/download/${KUBEEDGE_VERSION}/keadm-${KUBEEDGE_VERSION}-linux-amd64.tar.gz
-
-# Extract and install
-tar -zxvf keadm-${KUBEEDGE_VERSION}-linux-amd64.tar.gz
-sudo cp keadm-${KUBEEDGE_VERSION}-linux-amd64/keadm /usr/local/bin/keadm
-
-# Verify
-keadm version
-# KubeEdge version: v1.15.0
-```
-
-### 1.3 Initialize CloudCore on the cloud node
-
-```bash
-# Run on: cloud-node
-
-keadm init \
-  --advertise-address=192.168.1.10 \
-  --kube-config=/root/.kube/config \
-  --kubeedge-version=${KUBEEDGE_VERSION}
-
-# This command:
-# 1. Downloads and installs the KubeEdge CRDs (Device, DeviceModel, etc.)
-# 2. Deploys CloudCore as a Pod in the kubeedge namespace
-# 3. Opens port 10000/TCP for edge node connections
-
-# Verify CloudCore is running
-kubectl get pods -n kubeedge
-# NAME                        READY   STATUS    AGE
-# cloudcore-xxxxxxxxx-xxxxx   1/1     Running   1m
-
-# Retrieve the join token for the edge node
-keadm gettoken --kube-config=/root/.kube/config
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...   ← copy this value
-
-# If the command above doesn't work use this instead:
-kubectl get secret -n kubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d
-```
-
-This is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS using the issued certificate — the token is not needed again.
-
-### 1.4 Join the edge node to the cluster
-
-```bash
-# Run on: edge-node
-
-keadm join \
-  --cloudcore-ipport=192.168.1.10:10000 \
-  --token=<token-from-step-1.3> \
-  --kubeedge-version=${KUBEEDGE_VERSION}
-
-# This command:
-# 1. Downloads and installs EdgeCore
-# 2. Requests a TLS certificate from CloudCore using the bootstrap token
-# 3. Writes the EdgeCore configuration to /etc/kubeedge/config/edgecore.yaml
-# 4. Starts and enables the edgecore systemd service
-
-# Verify EdgeCore is running
-sudo systemctl status edgecore
-# ● edgecore.service - KubeEdge Edge Node
-#    Loaded: loaded (/etc/systemd/system/edgecore.service; enabled)
-#    Active: active (running)
-```
-
-### 1.5 Verify the edge node has joined the cluster
-
-```bash
-# Run on: cloud-node
-
+# Verifica
 kubectl get nodes
-# NAME          STATUS   ROLES          AGE   VERSION
-# cloud-node    Ready    control-plane  5m    v1.27.x
-# edge-node     Ready    agent,edge     1m    v1.13.x
+# NAME         STATUS   ROLES           VERSION
+# cloud-node   Ready    control-plane   v1.35.x+k3s1
 ```
 
-The `agent,edge` role confirms that the node is managed by KubeEdge.
+### 1.2 Installazione keadm
 
----
-
-## Lab 2 — Workload deployment to the edge
-
-**Objective**: deploy a containerized workload (nginx) to the edge node using standard Kubernetes tooling, and verify it is actually running on the edge node.
-
-### 2.1 Label the edge node
-
-Labels allow flexible workload targeting without hardcoding hostnames in manifests.
+`keadm` è il CLI di KubeEdge per gestire il cluster. Va installato su **entrambe le VM**.
 
 ```bash
-# Run on: cloud-node
-
-kubectl label node edge-node location=factory-floor
-
-# Verify
-kubectl get node edge-node --show-labels
-# NAME        STATUS   ROLES        LABELS
-# edge-node   Ready    agent,edge   ...,location=factory-floor,...
+# Scarica il binario (versione esplicita per evitare problemi con ${})
+wget https://github.com/kubeedge/kubeedge/releases/download/v1.15.0/keadm-v1.15.0-linux-amd64.tar.gz
+tar -zxf keadm-v1.15.0-linux-amd64.tar.gz
 ```
 
-### 2.2 Apply the Deployment manifest
-
-```yaml
-# File: lab/manifests/deployment-nginx.yaml
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-edge
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx-edge
-  template:
-    metadata:
-      labels:
-        app: nginx-edge
-    spec:
-      # Schedule on nodes labeled location=factory-floor
-      nodeSelector:
-        location: factory-floor
-
-      # KubeEdge taints edge nodes with this key — we must tolerate it
-      tolerations:
-        - key: "node-role.kubernetes.io/edge"
-          operator: "Exists"
-          effect: "NoSchedule"
-
-      containers:
-        - name: nginx
-          image: nginx:1.25-alpine    # alpine variant: ~40 MB, faster to pull
-          ports:
-            - containerPort: 80
-          resources:
-            requests:
-              memory: "32Mi"
-              cpu: "50m"
-            limits:
-              memory: "64Mi"
-              cpu: "100m"
-
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 10
-            periodSeconds: 30
-```
+> **❌ Errore**: `cp: -r not specified; omitting directory 'keadm-v1.15.0-linux-amd64/keadm'`
+> **✅ Fix**: Il binario è annidato in una sottocartella. Usa `find keadm-v1.15.0-linux-amd64 -name 'keadm' -type f` per trovarlo.
 
 ```bash
-# Run on: cloud-node
+# Percorso corretto del binario
+sudo cp keadm-v1.15.0-linux-amd64/keadm/keadm /usr/local/bin/keadm
+sudo chmod +x /usr/local/bin/keadm
+keadm version   # deve stampare v1.15.0
+```
 
-# Create the manifest file
-cat > deployment-nginx.yaml << 'EOF'
-# (paste the YAML above)
+### 1.3 Avvio di CloudCore
+
+CloudCore è il componente cloud di KubeEdge. Gestisce la comunicazione con tutti gli edge-node.
+
+```bash
+keadm init \
+  --advertise-address=<IP-CLOUD-NODE> \
+  --kube-config=$HOME/.kube/config \
+  --kubeedge-version=v1.15.0
+
+# Verifica che CloudCore sia Running
+kubectl get pods -n kubeedge
+# NAME                      READY   STATUS    AGE
+# cloudcore-xxxxx-xxxxx     1/1     Running   1m
+
+# Recupera il token per il join dell'edge-node (copialo!)
+keadm gettoken --kube-config=$HOME/.kube/config
+```
+
+> **⚠ Attenzione** — Il token scade dopo alcune ore. Se l'edge-node non riesce a fare il join, rigenera il token con `keadm gettoken` e riprova.
+
+### 1.4 Join dell'edge-node
+
+Apri una seconda finestra PowerShell ed entra nell'edge-node:
+
+```bash
+multipass shell edge-node
+```
+
+Prima di fare il join, installa le dipendenze:
+
+```bash
+# 1. containerd
+sudo apt-get update -q && sudo apt-get install -y containerd
+
+# 2. Plugin CNI (necessari per la rete dei container)
+sudo mkdir -p /opt/cni/bin
+wget -q https://github.com/containernetworking/plugins/releases/download/v1.3.0/cni-plugins-linux-amd64-v1.3.0.tgz
+sudo tar -zxf cni-plugins-linux-amd64-v1.3.0.tgz -C /opt/cni/bin
+
+# 3. Configurazione CNI
+sudo mkdir -p /etc/cni/net.d
+cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
+{"cniVersion":"0.4.0","name":"bridge","type":"bridge",
+ "bridge":"cni0","isGateway":true,"ipMasq":true,
+ "ipam":{"type":"host-local","subnet":"10.244.0.0/16",
+ "routes":[{"dst":"0.0.0.0/0"}]}}
 EOF
 
+# 4. Disabilita SystemdCgroup (incompatibile con la versione di containerd)
+sudo sed -i 's/SystemdCgroup = true/SystemdCgroup = false/' /etc/containerd/config.toml
+sudo systemctl restart containerd
+
+# 5. keadm (stessa procedura della cloud-node)
+wget https://github.com/kubeedge/kubeedge/releases/download/v1.15.0/keadm-v1.15.0-linux-amd64.tar.gz
+tar -zxf keadm-v1.15.0-linux-amd64.tar.gz
+sudo cp keadm-v1.15.0-linux-amd64/keadm/keadm /usr/local/bin/keadm
+sudo chmod +x /usr/local/bin/keadm
+```
+
+Ora unisci l'edge-node al cluster:
+
+```bash
+sudo keadm join \
+  --cloudcore-ipport=<IP-CLOUD-NODE>:10000 \
+  --token=<TOKEN-DA-STEP-1.3> \
+  --kubeedge-version=v1.15.0
+
+# Output atteso:
+# KubeEdge edgecore is running, For logs visit: journalctl -u edgecore.service -xe
+```
+
+**Tabella errori comuni:**
+
+| Errore | Soluzione |
+|--------|-----------|
+| `cni plugin not initialized` | Installa CNI plugins e crea `/etc/cni/net.d/10-bridge.conf` (vedi sopra) |
+| `expected cgroupsPath to be of format slice:prefix:name` | `sed -i 's/SystemdCgroup = true/SystemdCgroup = false/' /etc/containerd/config.toml && systemctl restart containerd` |
+| `management directory is not clean` | `sudo rm -rf /etc/kubeedge/` poi riprova il join |
+| `token expired / certificate verification failed` | Rigenera il token: `keadm gettoken --kube-config=$HOME/.kube/config` |
+| `port 10000 unreachable` | Verifica IP cloud-node con `multipass list` e che le VM siano entrambe Running |
+
+### 1.5 Verifica finale
+
+```bash
+# Dalla cloud-node
+kubectl get nodes
+# NAME         STATUS   ROLES          VERSION
+# cloud-node   Ready    control-plane  v1.35.x+k3s1
+# edge-node    Ready    agent,edge     v1.26.7-kubeedge-v1.15.0
+```
+
+> **✅ Lab 1 Completato** — La versione diversa è normale: EdgeCore implementa solo il subset del kubelet necessario per l'edge.
+
+---
+
+## Lab 2 — Deploy del Workload sull'Edge
+
+**Obiettivo**: deployare nginx sull'edge-node usando `kubectl` dalla cloud-node, verificare che giri localmente.
+
+### 2.1 Etichetta il nodo
+
+```bash
+kubectl label node edge-node location=factory-floor
+kubectl get node edge-node --show-labels
+```
+
+### 2.2 Crea e applica il manifest
+
+> **⚠ Consiglio** — Problema comune: il copy-paste dal terminale introduce tab invece di spazi nel YAML. Per evitarlo, trasferisci il file `deployment-nginx.yaml` dalla cartella KubeEdge con `multipass transfer` (vedi Sezione 0).
+
+```powershell
+# Trasferisci il file dalla cartella KubeEdge (PowerShell)
+Copy-Item '...\KubeEdge\deployment-nginx.yaml' C:\temp\deployment-nginx.yaml
+multipass transfer C:\temp\deployment-nginx.yaml cloud-node:/home/ubuntu/deployment-nginx.yaml
+```
+
+```bash
+# Applica dalla cloud-node
 kubectl apply -f deployment-nginx.yaml
-
-# Watch the Pod come up
-kubectl get pods -w
-# NAME                          READY   STATUS              NODE
-# nginx-edge-7d6f9b8c4-xk2p9   0/1     ContainerCreating   edge-node
-# nginx-edge-7d6f9b8c4-xk2p9   1/1     Running             edge-node
 ```
 
-### 2.3 Verify the workload is running on the edge node
+Il manifest include due elementi fondamentali per KubeEdge:
+- `nodeSelector: location: factory-floor` — schedula il Pod solo sui nodi con questa etichetta
+- `toleration` per `node-role.kubernetes.io/edge:NoSchedule` — KubeEdge aggiunge automaticamente questo taint agli edge-node; senza la toleration il Pod non viene schedulato
+
+### 2.3 Verifica
 
 ```bash
-# Run on: cloud-node
+# Dalla cloud-node — osserva il Pod partire
+kubectl get pods -o wide -w
+# NAME                         READY   STATUS    IP           NODE
+# nginx-edge-6d75c7c5f-92wct   1/1     Running   10.244.0.5   edge-node
 
-# Confirm placement and IP address
-kubectl get pods -o wide
-# NAME                          READY   STATUS    IP           NODE
-# nginx-edge-7d6f9b8c4-xk2p9   1/1     Running   10.42.1.10   edge-node
+# Dalla edge-node — verifica il container localmente
+sudo ctr -n k8s.io containers ls
+# Deve apparire nginx:1.25-alpine con stato Running
 
-# Inspect the Pod's events (confirm image was pulled and container started)
-kubectl describe pod nginx-edge-7d6f9b8c4-xk2p9
-# Events:
-#   Type    Reason     Message
-#   ----    ------     -------
-#   Normal  Pulling    Pulling image "nginx:1.25-alpine"
-#   Normal  Pulled     Successfully pulled image
-#   Normal  Created    Created container nginx
-#   Normal  Started    Started container nginx
+# Test che nginx risponda
+curl http://10.244.0.5:80
 ```
 
-```bash
-# Run on: edge-node
-
-# Verify the container is running locally
-sudo crictl ps
-# CONTAINER   IMAGE              STATE     NAME
-# a1b2c3d4e   nginx:1.25-alpine  Running   nginx
-
-# Test the nginx response locally
-curl http://10.42.1.10:80
-# <!DOCTYPE html>
-# <html>
-# <head><title>Welcome to nginx!</title></head>
-# ...
-```
-
-The container is running on the edge node, but it was scheduled entirely from the cloud using standard `kubectl apply`. From the cloud's perspective this is no different from deploying to any other Kubernetes node. From the edge's perspective, Edged is managing the container locally via containerd.
+> **✅ Lab 2 Completato** — Il Pod è stato schedulato dalla cloud ma il container viene gestito localmente da Edged sulla edge-node, tramite containerd. Il cloud non è coinvolto nel mantenerlo in esecuzione.
 
 ---
 
-## Lab 3 — Offline resilience
+## Lab 3 — Offline Resilience
 
-**Objective**: demonstrate that edge workloads continue running during a cloud outage, and that state is automatically reconciled when connectivity is restored.
+**Obiettivo**: simulare un'interruzione di rete tra edge e cloud, verificare che nginx continui a girare, poi ripristinare la connettività e osservare la riconciliazione automatica.
 
-### 3.1 Confirm the baseline state
+### 3.1 Verifica stato baseline
 
 ```bash
-# Run on: cloud-node
-
-# Both nodes should be Ready, Pod should be Running
+# Dalla cloud-node — entrambi i nodi Ready, Pod Running
 kubectl get nodes && kubectl get pods -o wide
-# NAME          STATUS   ROLES          AGE
-# cloud-node    Ready    control-plane  15m
-# edge-node     Ready    agent,edge     11m
-#
-# NAME                          READY   STATUS    NODE
-# nginx-edge-7d6f9b8c4-xk2p9   1/1     Running   edge-node
 ```
 
-### 3.2 Simulate a network outage
+### 3.2 Simula il network outage
+
+Blocca il traffico dall'edge-node verso la cloud-node con iptables:
 
 ```bash
-# Run on: edge-node
-
-# Block all outbound traffic from edge-node to cloud-node
-# This completely severs the WebSocket tunnel
-sudo iptables -A OUTPUT -d 192.168.1.10 -j DROP
-
-echo "Network outage simulated. Cloud node is unreachable from edge-node."
+# Sulla edge-node
+sudo iptables -A OUTPUT -d <IP-CLOUD-NODE> -j DROP
+echo 'Outage simulato. Cloud irraggiungibile.'
 ```
 
-### 3.3 Observe the cluster from the cloud
+### 3.3 Osserva dalla cloud-node
 
 ```bash
-# Run on: cloud-node
-
-# After ~40 seconds (heartbeat timeout), the edge node appears NotReady
+# Aspetta ~40 secondi (timeout heartbeat)
 watch kubectl get nodes
-# NAME          STATUS     ROLES          AGE
-# cloud-node    Ready      control-plane  20m
-# edge-node     NotReady   agent,edge     16m   ← after ~40 seconds
+# NAME         STATUS     ROLES
+# cloud-node   Ready      control-plane
+# edge-node    NotReady   agent,edge    ← dopo ~40 secondi
 
-# Pod status from the cloud shows Unknown (cloud cannot verify edge state)
 kubectl get pods -o wide
-# NAME                          READY   STATUS    NODE
-# nginx-edge-7d6f9b8c4-xk2p9   1/1     Unknown   edge-node
+# STATUS: Unknown oppure Running (dipende dalla versione K3s/KubeEdge)
+# In ogni caso il cloud NON può verificare lo stato reale dell'edge
 ```
 
-The Pod status shows `Unknown` — not `Terminating` or `Error`. This is deliberate: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes, so pods are never evicted. The cloud simply cannot verify the edge state while disconnected.
+> **ℹ Perché non Terminating?** — Lo status `Unknown` è il comportamento atteso. L'importante è che i Pod non vengano evicted: KubeEdge imposta un `tolerationSeconds` molto alto sugli edge-node proprio per questo.
 
-### 3.4 Verify the workload is still running at the edge
+### 3.4 Verifica sull'edge-node
 
 ```bash
-# Run on: edge-node
+# Sulla edge-node — nginx è ancora attivo nonostante il cloud sia irraggiungibile
+sudo ctr -n k8s.io containers ls
+# docker.io/library/nginx:1.25-alpine   Running   ← ancora vivo!
 
-# The container is still running — completely unaffected by the cloud outage
-sudo crictl ps
-# CONTAINER   IMAGE              STATE     NAME
-# a1b2c3d4e   nginx:1.25-alpine  Running   nginx
-
-# Nginx is still serving traffic locally
-curl http://10.42.1.10:80
-# <!DOCTYPE html><html><head><title>Welcome to nginx!</title></head>...
-
-# EdgeCore logs show the disconnection — and continued operation
-sudo journalctl -u edgecore --since "5 minutes ago" | grep -i "connect\|offline\|disconnect"
-# ... connection to cloud lost
-# ... running in offline mode
-# ... (EdgeCore continues managing workloads from local cache)
+curl http://10.244.0.5:80
+# <!DOCTYPE html>... nginx risponde normalmente
 ```
 
-### 3.5 Simulate a container crash during the outage
-
-This step demonstrates that Edged can restart crashed containers entirely from the local cache, without any cloud interaction.
+### 3.5 Ripristina la connettività
 
 ```bash
-# Run on: edge-node
+# Sulla edge-node — rimuovi la regola iptables
+sudo iptables -D OUTPUT -d <IP-CLOUD-NODE> -j DROP
+echo 'Connettività ripristinata.'
 
-# Find and kill the nginx container process
-CONTAINER_ID=$(sudo crictl ps | grep nginx | awk '{print $1}')
-sudo crictl stop $CONTAINER_ID
-
-# Wait a few seconds, then check — Edged restarts it from the cached spec
-sleep 5
-sudo crictl ps
-# CONTAINER   IMAGE              STATE     NAME
-# b2c3d4e5f   nginx:1.25-alpine  Running   nginx   ← new container ID, freshly started
-```
-
-The container restarted without any cloud involvement. Edged read the Pod spec from MetaManager's SQLite cache and recreated the container via containerd.
-
-### 3.6 Restore connectivity and observe reconciliation
-
-```bash
-# Run on: edge-node
-
-# Remove the iptables rule to restore connectivity
-sudo iptables -D OUTPUT -d 192.168.1.10 -j DROP
-
-echo "Connectivity restored."
-```
-
-```bash
-# Run on: cloud-node
-
-# Watch the edge node return to Ready (~10 seconds)
+# Dalla cloud-node — osserva la riconciliazione automatica (~10 secondi)
 watch kubectl get nodes
-# NAME          STATUS   ROLES          AGE
-# cloud-node    Ready    control-plane  30m
-# edge-node     Ready    agent,edge     26m   ← back to Ready
-
-# Pod status is corrected automatically
-kubectl get pods -o wide
-# NAME                          READY   STATUS    NODE
-# nginx-edge-7d6f9b8c4-xk2p9   1/1     Running   edge-node
-
-# CloudCore logs confirm the reconnection
-kubectl logs -n kubeedge -l app=cloudcore --tail=20
-# edge node edge-node connected
-# sync complete
+# NAME         STATUS   ROLES
+# cloud-node   Ready    control-plane
+# edge-node    Ready    agent,edge     ← torna Ready automaticamente
 ```
 
-When the tunnel re-established, MetaManager flushed its queued status updates to CloudCore. The API server was updated automatically. No manual intervention was required.
+> **✅ Lab 3 Completato** — Nessun intervento manuale necessario. EdgeHub ha re-stabilito il tunnel WebSocket, MetaManager ha inviato gli aggiornamenti in coda, l'API server è stato aggiornato automaticamente.
 
-### 3.7 Cleanup
+---
 
-```bash
-# Run on: cloud-node
+## Guida Esame — Comandi da Mostrare
 
-# Remove the deployment
-kubectl delete -f deployment-nginx.yaml
+Le VM Multipass rimangono salvate sul portatile tra una sessione e l'altra. Per l'esame basta riattivarle e rieseguire i comandi dimostrativi.
 
-# Verify the Pod is terminated
-kubectl get pods
-# No resources found in default namespace.
+### Avvio rapido (VM già configurate)
+
+```powershell
+# PowerShell — avvia le VM (se erano sospese)
+multipass start cloud-node
+multipass start edge-node
+multipass list   # verifica che siano Running
+
+# Entra nella cloud-node
+multipass shell cloud-node
 ```
 
----
-
-## Lab summary
-
-| Lab | Demonstrated | Key component |
-|-----|-------------|---------------|
-| Lab 1 | K3s + KubeEdge setup on two VMs; edge node joins via `keadm` | CloudCore, EdgeCore, EdgeHub |
-| Lab 2 | Workload scheduled from cloud runs on edge node; verified with `kubectl` and `crictl` | Edged, MetaManager |
-| Lab 3 | Network outage: edge workload keeps running; container restart from cache; automatic reconciliation | MetaManager, Edged, EdgeHub |
-
-These three labs cover the full lifecycle of a KubeEdge deployment: setup, workload management, and fault tolerance. The three properties that distinguish KubeEdge from a standard Kubernetes installation.
-
----
-
-## Troubleshooting reference
-
-| Symptom | Likely cause | Fix |
-|---------|-------------|-----|
-| `keadm init` fails with kubeconfig error | Wrong kubeconfig path | Run `kubectl get nodes` first to confirm K3s is working; use `--kube-config=/root/.kube/config` |
-| Edge node stays `NotReady` after `keadm join` | Port 10000 blocked by firewall | Run `sudo ufw allow 10000/tcp` on cloud-node; verify with `nc -zv 192.168.1.10 10000` from edge-node |
-| Pod stuck in `ContainerCreating` on edge | Image pull failed (no internet on edge) | Pre-pull on edge: `sudo crictl pull nginx:1.25-alpine`; or set up a local image registry |
-| EdgeCore crashes on start | Token expired or already used | Re-run `keadm gettoken` and rejoin with the new token |
-| `crictl` command not found | containerd CLI not in PATH | Install: `sudo apt install -y containerd`; or use `ctr -n k8s.io c ls` |
-| `keadm join` fails with "certificate verification" | Time drift between VMs | Sync clocks: `sudo timedatectl set-ntp true` on both VMs |
-| Pod shows `Unknown` status from cloud | Expected during outage | This is correct behavior; status resolves when connectivity is restored |
-| EdgeCore service not starting after reboot | Service not enabled | Run `sudo systemctl enable edgecore` |
-
----
-
-*Previous: [From Docker to Kubernetes](./From%20Docker%20to%20Kubernetes.md)*
+> **⚠ Attenzione** — Se dopo il riavvio delle VM l'edge-node risulta `NotReady`, aspetta 30 secondi che EdgeCore si riconnetta automaticamente. Se non si riconnette: `sudo systemctl restart edgecore` sulla edge-node.
