@@ -85,7 +85,7 @@ docker compose up   # the entire stack in one command
 
 ---
 
-## Step 1 — Secrets and ConfigMaps
+## Step 1: Secrets and ConfigMaps
 
 ### Secret for database credentials
 
@@ -120,7 +120,7 @@ data:
 
 ---
 
-## Step 2 — Persistent storage for PostgreSQL
+## Step 2: Persistent storage for PostgreSQL
 
 ### PersistentVolumeClaim
 
@@ -142,7 +142,7 @@ spec:
 
 ---
 
-## Step 3 — Deploying PostgreSQL
+## Step 3: Deploying PostgreSQL
 
 ### Deployment
 
@@ -226,7 +226,7 @@ spec:
 
 ---
 
-## Step 4 — Deploying the Spring Boot application
+## Step 4: Deploying the Spring Boot application
 
 ### Deployment with initContainer
 
@@ -328,7 +328,7 @@ spec:
 
 ---
 
-## Step 5 - Deploying the full stack
+## Step 5: Deploying the full stack
 
 ```bash
 # Apply in dependency order: storage and DB first, then the app
