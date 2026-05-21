@@ -1,7 +1,4 @@
 # KubeEdge Lab
-## Setup, Execution, Errors and Fixes
-*Distributed Edge Programming | Mattia Compagnone*
-
 ---
 
 ## 0. Prerequisites — Multipass Setup
