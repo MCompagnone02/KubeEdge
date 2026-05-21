@@ -46,7 +46,7 @@ kubectl get nodes
 # cloud-node   Ready    control-plane,master   1m    v1.27.x
 
 # Copy kubeconfig to the standard location
-mkdir -p ~/.kube
+sudo mkdir -p ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
 
