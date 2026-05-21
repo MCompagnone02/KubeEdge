@@ -101,7 +101,7 @@ kubectl get pods -n kubeedge
 keadm gettoken --kube-config=/root/.kube/config
 # eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...   ← copy this value
 
-If the command above doesn't work use this instead:
+# If the command above doesn't work use this instead:
 kubectl get secret -n kubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d
 ```
 
