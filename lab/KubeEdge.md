@@ -81,8 +81,8 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.15.0/keadm-v1.15.
 tar -zxf keadm-v1.15.0-linux-amd64.tar.gz
 ```
 
-> **Error**: `cp: -r not specified; omitting directory 'keadm-v1.15.0-linux-amd64/keadm'`
-> **Fix**: The binary is nested inside a subdirectory. Use `find keadm-v1.15.0-linux-amd64 -name 'keadm' -type f` to locate it.
+**Error**: `cp: -r not specified; omitting directory 'keadm-v1.15.0-linux-amd64/keadm'`
+**Fix**: The binary is nested inside a subdirectory. Use `find keadm-v1.15.0-linux-amd64 -name 'keadm' -type f` to locate it.
 
 ```bash
 # Correct binary path
@@ -115,9 +115,9 @@ kubectl get pods -n kubeedge
 keadm gettoken --kube-config=$HOME/.kube/config
 ```
 
-> **Note** — The token expires after a few hours. If the edge node fails to join, regenerate the token with `keadm gettoken` and retry.
+**Note**: the token expires after a few hours. If the edge node fails to join, regenerate the token with `keadm gettoken` and retry.
 
-> **About the token**: this is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS — the token is not needed again.
+**About the token**: this is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS so the token is not needed again.
 
 ### 1.4 Join the edge node to the cluster
 
@@ -208,7 +208,7 @@ kubectl get node edge-node --show-labels
 
 ### 2.2 Apply the Deployment manifest
 
-> **Common issue** — Copy-pasting YAML from the terminal may introduce tabs instead of spaces. To avoid this, transfer the `deployment-nginx.yaml` file from your KubeEdge folder using `multipass transfer` (see Section 0).
+**Common issue** — Copy-pasting YAML from the terminal may introduce tabs instead of spaces. To avoid this, transfer the `deployment-nginx.yaml` file from your KubeEdge folder using `multipass transfer` (see Section 0).
 
 ```powershell
 # Transfer from your KubeEdge folder (PowerShell)
@@ -222,8 +222,8 @@ kubectl apply -f deployment-nginx.yaml
 ```
 
 The manifest includes two elements that are essential for KubeEdge:
-- `nodeSelector: location: factory-floor` — schedules the Pod only on nodes with this label
-- `toleration` for `node-role.kubernetes.io/edge:NoSchedule` — KubeEdge automatically taints edge nodes with this key; without the toleration the Pod will not be scheduled
+- `nodeSelector: location: factory-floor` — schedules the Pod only on nodes with this label;
+- `toleration` for `node-role.kubernetes.io/edge:NoSchedule` — KubeEdge automatically taints edge nodes with this key; without the toleration the Pod will not be scheduled;
 
 ```yaml
 # deployment-nginx.yaml
@@ -324,7 +324,7 @@ kubectl get pods -o wide
 # Either way, the cloud CANNOT verify the actual edge state
 ```
 
-> **Why not Terminating?** — The `Unknown` status is the expected behavior. The important thing is that Pods are never evicted: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes precisely for this reason.
+**Why not Terminating?** — The `Unknown` status is the expected behavior. The important thing is that Pods are never evicted: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes precisely for this reason.
 
 ### 3.4 Verify the workload is still running at the edge
 
@@ -343,7 +343,7 @@ sudo journalctl -u edgecore --since "5 minutes ago" | grep -i "connect\|offline\
 # ... (EdgeCore continues managing workloads from local cache)
 ```
 
-The container is running on the edge node completely unaffected by the cloud outage. Edged read the Pod spec from MetaManager's SQLite cache and manages the container via containerd — no cloud interaction required.
+The container is running on the edge node completely unaffected by the cloud outage. Edged read the Pod spec from MetaManager's SQLite cache and manages the container via containerd (no cloud interaction required).
 
 ### 3.5 Restore connectivity and observe reconciliation
 
