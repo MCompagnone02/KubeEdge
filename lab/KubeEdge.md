@@ -205,7 +205,7 @@ kubectl get node edge-node --show-labels
 
 ### 2.2 Apply the Deployment manifest
 
-**Common issue** — Copy-pasting YAML from the terminal may introduce tabs instead of spaces. To avoid this, transfer the `deployment-nginx.yaml` file from your KubeEdge folder using `multipass transfer` (see Section 0).
+**Common issue**: copy-pasting YAML from the terminal may introduce tabs instead of spaces. To avoid this, transfer the `deployment-nginx.yaml` file from your KubeEdge folder using `multipass transfer`.
 
 ```powershell
 # Transfer from your KubeEdge folder (PowerShell)
