@@ -24,11 +24,11 @@ multipass launch 22.04 --name edge-node  --cpus 1 --memory 2G --disk 10G
 multipass list
 ```
 
-> **ℹ Note** — Write down the IPv4 of cloud-node (e.g. `172.26.39.147`). You will use this IP in all subsequent commands.
+> **Note** — Write down the IPv4 of cloud-node (e.g. `172.26.39.147`). You will use this IP in all subsequent commands.
 
 **Transferring files to the VMs**
 
-Due to special characters in the path (°, apostrophes), copy files to `C:\temp\` first, then transfer them:
+If you have special characters in the path (°, apostrophes), copy files to `C:\temp\` first, then transfer them:
 
 ```powershell
 New-Item -ItemType Directory -Force -Path C:\temp
@@ -52,8 +52,8 @@ multipass shell cloud-node
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -
 ```
 
-> **❌ Error**: `Unable to read /etc/rancher/k3s/k3s.yaml — permission denied`
-> **✅ Fix**: `sudo chmod 644 /etc/rancher/k3s/k3s.yaml`
+> **Error**: `Unable to read /etc/rancher/k3s/k3s.yaml — permission denied`
+> **Fix**: `sudo chmod 644 /etc/rancher/k3s/k3s.yaml`
 
 After the fix, configure kubectl:
 
@@ -81,8 +81,8 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.15.0/keadm-v1.15.
 tar -zxf keadm-v1.15.0-linux-amd64.tar.gz
 ```
 
-> **❌ Error**: `cp: -r not specified; omitting directory 'keadm-v1.15.0-linux-amd64/keadm'`
-> **✅ Fix**: The binary is nested inside a subdirectory. Use `find keadm-v1.15.0-linux-amd64 -name 'keadm' -type f` to locate it.
+> **Error**: `cp: -r not specified; omitting directory 'keadm-v1.15.0-linux-amd64/keadm'`
+> **Fix**: The binary is nested inside a subdirectory. Use `find keadm-v1.15.0-linux-amd64 -name 'keadm' -type f` to locate it.
 
 ```bash
 # Correct binary path
@@ -115,7 +115,7 @@ kubectl get pods -n kubeedge
 keadm gettoken --kube-config=$HOME/.kube/config
 ```
 
-> **⚠ Note** — The token expires after a few hours. If the edge node fails to join, regenerate the token with `keadm gettoken` and retry.
+> **Note** — The token expires after a few hours. If the edge node fails to join, regenerate the token with `keadm gettoken` and retry.
 
 > **About the token**: this is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS — the token is not needed again.
 
@@ -189,8 +189,6 @@ kubectl get nodes
 # cloud-node   Ready    control-plane  v1.35.x+k3s1
 # edge-node    Ready    agent,edge     v1.26.7-kubeedge-v1.15.0
 ```
-
-> **✅ Lab 1 complete** — The version difference is expected: EdgeCore implements only the subset of the kubelet API relevant to edge operation.
 
 ---
 
@@ -288,8 +286,6 @@ curl http://10.244.0.5:80
 
 **What to observe**: the container is running on the edge node, but it was scheduled entirely from the cloud using standard `kubectl apply`. From the cloud's perspective this is no different from deploying to any other Kubernetes node. From the edge's perspective, Edged is managing the container locally via containerd.
 
-> **✅ Lab 2 complete** — The Pod was scheduled from the cloud but the container is managed locally by Edged on the edge node via containerd. The cloud is not involved in keeping it running.
-
 ---
 
 ## Lab 3 — Offline Resilience
@@ -377,8 +373,6 @@ kubectl logs -n kubeedge -l app=cloudcore --tail=20
 
 When the tunnel re-established, MetaManager flushed its queued status updates to CloudCore. The API server was updated automatically. No manual intervention was required.
 
-> **✅ Lab 3 complete** — EdgeHub re-established the WebSocket tunnel, MetaManager sent the queued updates, the API server was updated automatically.
-
 ### 3.6 Cleanup
 
 ```bash
@@ -403,24 +397,6 @@ kubectl get pods
 These three labs cover the full lifecycle of a KubeEdge deployment: setup, workload management, and fault tolerance — the three properties that distinguish KubeEdge from a standard Kubernetes installation.
 
 ---
-
-## Exam Guide — Commands to Demonstrate
-
-The Multipass VMs remain saved on the laptop between sessions. For the exam, just restart them and re-run the demo commands.
-
-### Quick start (VMs already configured)
-
-```powershell
-# PowerShell — start the VMs (if they were suspended)
-multipass start cloud-node
-multipass start edge-node
-multipass list   # verify both are Running
-
-# Enter the cloud node
-multipass shell cloud-node
-```
-
-> **⚠ Note** — If after restarting the VMs the edge node shows `NotReady`, wait 30 seconds for EdgeCore to reconnect automatically. If it does not reconnect: run `sudo systemctl restart edgecore` on the edge node.
 
 ---
 
