@@ -100,6 +100,9 @@ kubectl get pods -n kubeedge
 # Retrieve the join token for the edge node
 keadm gettoken --kube-config=/root/.kube/config
 # eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...   ← copy this value
+
+If the command above doesn't work use this instead:
+kubectl get secret -n kubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d
 ```
 
 This is a time-limited JWT that the edge node uses *once* to obtain its permanent TLS certificate from CloudCore. After joining, communication is secured with mutual TLS using the issued certificate — the token is not needed again.
