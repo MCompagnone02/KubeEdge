@@ -29,7 +29,7 @@ Every Docker Compose → Kubernetes migration follows the same five steps, regar
 | `ports` | `Service.spec.ports` | Port exposure is handled by the Service, not the container directly |
 | `environment` (non-sensitive) | `ConfigMap` | Injected via `envFrom` |
 | `environment` (sensitive) | `Secret` | Injected via `envFrom` or individual `secretKeyRef` |
-| `networks` | Kubernetes DNS | Every Service is reachable by its name within the cluster — no explicit network needed |
+| `networks` | Kubernetes DNS | Every Service is reachable by its name within the cluster |
 | `depends_on` | `initContainer` | An init container runs to completion before the main container starts |
 | `healthcheck` | `readinessProbe` + `livenessProbe` | K8s has two separate mechanisms: readiness (ready for traffic?) and liveness (still alive?) |
 | `volumes` (named) | `PersistentVolumeClaim` | A PVC requests durable storage from the cluster |
