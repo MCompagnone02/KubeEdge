@@ -66,7 +66,7 @@ kubectl get nodes
 # cloud-node   Ready    control-plane   v1.35.x+k3s1
 ```
 
-> **What happened**: K3s started a single-node Kubernetes cluster using SQLite as the data store. The kubeconfig was copied to `~/.kube/config` so `kubectl` can find it without specifying `--kubeconfig` on every command.
+**What happened**: K3s started a single-node Kubernetes cluster using SQLite as the data store. The kubeconfig was copied to `~/.kube/config` so `kubectl` can find it without specifying `--kubeconfig` on every command.
 
 ### 1.2 Install keadm on both nodes
 
