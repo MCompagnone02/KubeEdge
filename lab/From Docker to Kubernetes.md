@@ -222,7 +222,7 @@ spec:
   type: ClusterIP        # internal only — never expose a database externally
 ```
 
-**Deployment vs StatefulSet for databases**: this example uses a `Deployment` for simplicity (one replica, single PVC). For production PostgreSQL — especially with replication — use a `StatefulSet`, which assigns a stable network identity and a dedicated PVC to each replica. For a single-instance dev database, `Deployment` + PVC is acceptable.
+**Deployment vs StatefulSet for databases**: this example uses a `Deployment` for simplicity (one replica, single PVC). For production PostgreSQL, especially with replication, use a `StatefulSet`, which assigns a stable network identity and a dedicated PVC to each replica. For a single-instance dev database, `Deployment` + PVC is acceptable.
 
 ---
 
