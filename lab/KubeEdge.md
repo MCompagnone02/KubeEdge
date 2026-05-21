@@ -49,7 +49,7 @@ multipass shell cloud-node
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -
 ```
 
-**Error**: `Unable to read /etc/rancher/k3s/k3s.yaml — permission denied`
+**Error**: `Unable to read /etc/rancher/k3s/k3s.yaml  permission denied`
 **Fix**: `sudo chmod 644 /etc/rancher/k3s/k3s.yaml`
 
 After the fix, configure kubectl:
@@ -219,8 +219,8 @@ kubectl apply -f deployment-nginx.yaml
 ```
 
 The manifest includes two elements that are essential for KubeEdge:
-- `nodeSelector: location: factory-floor` — schedules the Pod only on nodes with this label;
-- `toleration` for `node-role.kubernetes.io/edge:NoSchedule` — KubeEdge automatically taints edge nodes with this key; without the toleration the Pod will not be scheduled;
+- `nodeSelector: location: factory-floor`  schedules the Pod only on nodes with this label;
+- `toleration` for `node-role.kubernetes.io/edge:NoSchedule`  KubeEdge automatically taints edge nodes with this key; without the toleration the Pod will not be scheduled;
 
 ```yaml
 # deployment-nginx.yaml
@@ -268,12 +268,12 @@ spec:
 ### 2.3 Verify the workload is running on the edge node
 
 ```bash
-# Run on: cloud-node — watch the Pod come up
+# Run on: cloud-node  watch the Pod come up
 kubectl get pods -o wide -w
 # NAME                         READY   STATUS    IP           NODE
 # nginx-edge-6d75c7c5f-92wct   1/1     Running   10.244.0.5   edge-node
 
-# Run on: edge-node — verify the container is running locally
+# Run on: edge-node  verify the container is running locally
 sudo ctr -n k8s.io containers ls
 # Should show nginx:1.25-alpine with state Running
 
@@ -292,7 +292,7 @@ curl http://10.244.0.5:80
 ### 3.1 Confirm the baseline state
 
 ```bash
-# Run on: cloud-node — both nodes Ready, Pod Running
+# Run on: cloud-node  both nodes Ready, Pod Running
 kubectl get nodes && kubectl get pods -o wide
 ```
 
@@ -321,19 +321,19 @@ kubectl get pods -o wide
 # Either way, the cloud CANNOT verify the actual edge state
 ```
 
-**Why not Terminating?** — The `Unknown` status is the expected behavior. The important thing is that Pods are never evicted: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes precisely for this reason.
+**Why not Terminating?**  The `Unknown` status is the expected behavior. The important thing is that Pods are never evicted: KubeEdge sets an extremely large `tolerationSeconds` on edge nodes precisely for this reason.
 
 ### 3.4 Verify the workload is still running at the edge
 
 ```bash
-# Run on: edge-node — nginx is still alive despite the cloud being unreachable
+# Run on: edge-node  nginx is still alive despite the cloud being unreachable
 sudo ctr -n k8s.io containers ls
 # docker.io/library/nginx:1.25-alpine   Running   ← still alive!
 
 curl http://10.244.0.5:80
 # <!DOCTYPE html>... nginx responds normally
 
-# EdgeCore logs show the disconnection — and continued operation
+# EdgeCore logs show the disconnection  and continued operation
 sudo journalctl -u edgecore --since "5 minutes ago" | grep -i "connect\|offline\|disconnect"
 # ... connection to cloud lost
 # ... running in offline mode
@@ -345,13 +345,13 @@ The container is running on the edge node completely unaffected by the cloud out
 ### 3.5 Restore connectivity and observe reconciliation
 
 ```bash
-# Run on: edge-node — remove the iptables rule
+# Run on: edge-node  remove the iptables rule
 sudo iptables -D OUTPUT -d <CLOUD-NODE-IP> -j DROP
 echo "Connectivity restored."
 ```
 
 ```bash
-# Run on: cloud-node — watch the edge node return to Ready (~10 seconds)
+# Run on: cloud-node  watch the edge node return to Ready (~10 seconds)
 watch kubectl get nodes
 # NAME         STATUS   ROLES
 # cloud-node   Ready    control-plane
@@ -391,7 +391,7 @@ kubectl get pods
 | Lab 2 | Workload scheduled from cloud runs on edge node; verified with `kubectl` and `ctr` | Edged, MetaManager |
 | Lab 3 | Network outage: edge workload keeps running; automatic reconciliation on reconnect | MetaManager, Edged, EdgeHub |
 
-These three labs cover the full lifecycle of a KubeEdge deployment: setup, workload management, and fault tolerance — the three properties that distinguish KubeEdge from a standard Kubernetes installation.
+These three labs cover the full lifecycle of a KubeEdge deployment: setup, workload management, and fault tolerance  the three properties that distinguish KubeEdge from a standard Kubernetes installation.
 
 ---
 
