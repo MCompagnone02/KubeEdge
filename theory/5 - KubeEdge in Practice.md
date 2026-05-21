@@ -118,6 +118,10 @@ kubectl apply  →  API server (etcd)  →  EdgeController
                              ↑                                    ↑
                              └─────────────── status ────────────┘
                                               ↓
+                                            EdgeHub
+                                              ↓ (Web Socket/QUIC)
+                                           CloudCore
+                                              ↓
                                          EdgeController
                                               ↓
                                       API server (status update)
