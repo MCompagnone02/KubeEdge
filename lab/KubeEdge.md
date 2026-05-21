@@ -1,7 +1,7 @@
 # KubeEdge Lab
 ---
 
-## 0. Prerequisites — Multipass Setup
+## 0. Prerequisites: Multipass Setup
 
 Multipass creates lightweight Ubuntu VMs on Windows without manually configuring VirtualBox. It is the simplest way to simulate two Linux machines on the same laptop.
 
@@ -36,7 +36,7 @@ multipass transfer C:\temp\deployment-nginx.yaml cloud-node:/home/ubuntu/deploym
 
 ---
 
-## Lab 1 — Cluster Setup
+## Lab 1: Cluster Setup
 
 **Objective**: install K3s on the cloud node, start CloudCore, and join the edge node to the cluster.
 
@@ -189,7 +189,7 @@ kubectl get nodes
 
 ---
 
-## Lab 2 — Workload Deployment to the Edge
+## Lab 2: Workload Deployment to the Edge
 
 **Objective**: deploy a containerized workload (nginx) to the edge node using standard Kubernetes tooling, and verify it is actually running on the edge node.
 
@@ -285,7 +285,7 @@ curl http://10.244.0.5:80
 
 ---
 
-## Lab 3 — Offline Resilience
+## Lab 3: Offline Resilience
 
 **Objective**: simulate a network outage between edge and cloud, verify that nginx keeps running, then restore connectivity and observe automatic reconciliation.
 
