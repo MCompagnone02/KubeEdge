@@ -6,7 +6,7 @@
 
 Deploying an application to an edge node in KubeEdge is identical to deploying to any Kubernetes node. The only additions are a `nodeSelector` (or `nodeAffinity`) to target the edge node and a `toleration` for the edge taint.
 
-### Step 1 — Label the edge node
+### Step 1: Label the edge node
 
 ```bash
 # Add a descriptive label for flexible scheduling
@@ -16,7 +16,7 @@ kubectl label node edge-node-01 location=factory-floor environment=production
 kubectl get node edge-node-01 --show-labels
 ```
 
-### Step 2 — Write the Deployment manifest
+### Step 2: Write the Deployment manifest
 
 ```yaml
 # deployment-nginx.yaml
@@ -67,7 +67,7 @@ spec:
             periodSeconds: 30
 ```
 
-### Step 3 — Apply and verify
+### Step 3: Apply and verify
 
 ```bash
 # Deploy from the cloud node
@@ -242,7 +242,7 @@ sudo crictl inspectp <pod-id>
 
 ## Common patterns
 
-### Pattern 1 — Sensor data collection
+### Pattern 1: Sensor data collection
 
 An edge node runs a containerized application that reads from sensors via MQTT, aggregates data locally, and periodically sends summaries to the cloud for storage and analysis.
 
@@ -256,7 +256,7 @@ Sensor  →  MQTT PUBLISH  →  EventBus  →  DeviceTwin (reported state)
 
 Local aggregation reduces cloud bandwidth usage by orders of magnitude compared to sending every raw reading.
 
-### Pattern 2 — GitOps at the edge
+### Pattern 2: GitOps at the edge
 
 KubeEdge integrates naturally with GitOps tools (ArgoCD, Flux) because it reuses the standard Kubernetes API. A GitOps pipeline that manages cloud workloads can be extended to manage edge workloads simply by adding edge-targeted manifests to the Git repository.
 
