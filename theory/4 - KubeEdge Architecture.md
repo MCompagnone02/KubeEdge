@@ -127,7 +127,7 @@ keadm join --cloudcore-ipport=<ip>:10000 --token=<token>
 
 ## Edge layer
 
-The edge layer runs on each edge node. Its core component is **EdgeCore**, which is a single binary that bundles all edge-side functionality and replaces the standard Kubernetes node agent (`kubelet`).
+The edge layer runs on each edge node. Its core component is **EdgeCore**, which is a single binary that bundles all edge-side functionality.
 
 ### EdgeCore
 
