@@ -82,7 +82,7 @@ sudo snap alias microk8s.kubectl kubectl
 - **Developer-friendly**: single-node cluster ready in under a minute on any Ubuntu machine;
 - **Add-on ecosystem**: optional components (DNS, dashboard, Istio, Knative, Prometheus) enabled with a single command;
 - **High availability**: supports multi-node HA clusters with automatic etcd clustering via `microk8s add-node`;
-- **Strict confinement**: snap packaging isolates MicroK8s from the rest of the system — clean uninstall, no residue;
+- **Strict confinement**: snap packaging isolates MicroK8s from the rest of the system (clean uninstall, no residue);
 - **Automatic updates**: managed through the snap store channels (stable, candidate, beta, edge);
 - **GPU support**: `microk8s enable gpu` exposes NVIDIA GPUs to workloads via the NVIDIA operator;
 
@@ -152,7 +152,7 @@ Workloads can be distributed to specific NodePools, enabling topology-aware depl
 ### Limitations
 
 - No native IoT device management model (no Device/DeviceModel CRDs);
-- Requires YurtHub to be running on each edge node — adds a process dependency;
+- Requires YurtHub to be running on each edge node, so it adds a process dependency;
 - Tighter coupling to Alibaba Cloud tooling in some components;
 - More complex initial setup than K3s or MicroK8s;
 
