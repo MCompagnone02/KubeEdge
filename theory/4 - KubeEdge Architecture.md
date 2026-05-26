@@ -112,7 +112,7 @@ Every edge node authenticates to CloudCore using **TLS mutual authentication**. 
 1. `keadm gettoken` generates a time-limited bootstrap token on the cloud node;
 2. `keadm join` on the edge node uses the token to request a certificate from CloudCore;
 3. CloudCore signs and returns a node certificate;
-4. Subsequent connections use the node certificate for mutual TLS — the bootstrap token is no longer needed;
+4. Subsequent connections use the node certificate for mutual TLS: the bootstrap token is no longer needed;
 
 ```bash
 # Token is valid for a limited time (default: 24 hours)
@@ -190,7 +190,7 @@ This pattern decouples the cloud's management logic from the physical device's r
 
 #### EventBus
 
-EventBus is KubeEdge's **MQTT integration layer**. It connects DeviceTwin to the physical world via MQTT — the lightweight publish-subscribe protocol that is the de-facto standard for IoT communication (ISO/IEC 20922).
+EventBus is KubeEdge's **MQTT integration layer**. It connects DeviceTwin to the physical world via MQTT: the lightweight publish-subscribe protocol that is the de-facto standard for IoT communication (ISO/IEC 20922).
 
 EventBus can operate in two modes:
 
@@ -213,7 +213,7 @@ No other component communicates directly with the cloud. Edged, MetaManager, and
 - Message queuing and delivery guarantees;
 - Routing incoming cloud messages to the correct component;
 
-This design ensures that connectivity logic is centralized in one place — any component can assume reliable message delivery without worrying about connection state.
+This design ensures that connectivity logic is centralized in one place so any component can assume reliable message delivery without worrying about connection state.
 
 ---
 
@@ -223,7 +223,7 @@ KubeEdge extends the standard Kubernetes API with two custom resource types for 
 
 ### DeviceModel
 
-A **DeviceModel** defines the template for a *class* of devices — their properties, data types, units, and access modes. It is analogous to a class definition in object-oriented programming. A single DeviceModel can be instantiated by many Device resources.
+A **DeviceModel** defines the template for a *class* of devices: their properties, data types, units, and access modes. It is analogous to a class definition in object-oriented programming. A single DeviceModel can be instantiated by many Device resources.
 
 ```yaml
 apiVersion: devices.kubeedge.io/v1alpha2
@@ -324,7 +324,7 @@ spec:
       # Target a specific edge node
       nodeSelector:
         kubernetes.io/hostname: edge-node-01
-      # Edge nodes carry this taint by default — tolerate it to allow scheduling
+      # Edge nodes carry this taint by default
       tolerations:
         - key: "node-role.kubernetes.io/edge"
           operator: "Exists"
