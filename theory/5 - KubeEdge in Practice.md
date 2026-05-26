@@ -139,7 +139,7 @@ When the WebSocket tunnel between EdgeCore and CloudCore is interrupted:
 
 ### Why are pods not evicted?
 
-Standard Kubernetes evicts pods from `NotReady` nodes after `tolerationSeconds` expires (default: 300 seconds). KubeEdge overrides this by automatically setting an extremely large `tolerationSeconds` value on edge nodes when they join the cluster. This ensures that edge pods are never evicted due to connectivity loss — they are expected to keep running indefinitely at the edge.
+Standard Kubernetes evicts pods from `NotReady` nodes after `tolerationSeconds` expires (default: 300 seconds). KubeEdge overrides this by automatically setting an extremely large `tolerationSeconds` value on edge nodes when they join the cluster. This ensures that edge pods are never evicted due to connectivity loss; they are expected to keep running indefinitely at the edge.
 
 ```bash
 # From the cloud, the node appears NotReady during an outage
@@ -171,7 +171,7 @@ When connectivity is restored:
 2. **MetaManager** flushes its queued outgoing messages to CloudCore;
 3. **EdgeController** compares the edge state with the desired state stored in etcd;
 4. Any divergences are reconciled: missing resources are re-deployed, stale configurations are updated, deleted resources are removed;
-5. Pod statuses are written back to the API server — `kubectl get pods` becomes accurate again;
+5. Pod statuses are written back to the API server -> `kubectl get pods` becomes accurate again;
 
 ```bash
 # Watch the edge node return to Ready
@@ -280,7 +280,7 @@ The entire GitOps flow works without modification. Edge nodes are just another s
 
 In practice, KubeEdge delivers on its architectural promises:
 
-- **Workload deployment** uses standard `kubectl` and YAML manifests — no new tools to learn, existing GitOps pipelines work unchanged;
+- **Workload deployment** uses standard `kubectl` and YAML manifests (no new tools to learn, existing GitOps pipelines work unchanged);
 - **Offline operation** is transparent: edge workloads continue running during cloud outages, pods are never evicted, state is automatically reconciled on reconnection;
 - **IoT device management** uses Kubernetes-native custom resources (DeviceModel, Device) that integrate cleanly into existing workflows;
 - **Observability** relies on standard Kubernetes tooling, supplemented by direct log inspection on the edge node via `journalctl` and `crictl`;
