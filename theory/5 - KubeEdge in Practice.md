@@ -85,7 +85,7 @@ kubectl get pods -o wide
 # nginx-edge-7d6f9b8c4-xk2p9   1/1     Running   10.42.1.10   edge-node-01
 ```
 
-The pod is running on the edge node. The cloud control plane scheduled it, but the actual container is managed locally by Edged — the cloud is not involved in keeping it running.
+The pod is running on the edge node. The cloud control plane scheduled it, but the actual container is managed locally by Edged, hence the cloud is not involved in keeping it running.
 
 ---
 
