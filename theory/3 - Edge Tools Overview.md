@@ -31,7 +31,7 @@ K3s packages the entire control plane into a **single binary**, replacing or rem
 
 ### Security model
 
-K3s uses the same RBAC, TLS, and service account mechanisms as standard Kubernetes. Nodes authenticate to the API server using auto-generated bootstrap tokens and node certificates. All inter-component communication is encrypted by default.
+K3s uses the same RBAC (Role-Based Access Control), TLS (Transport Layer Security), and service account mechanisms as standard Kubernetes. Nodes authenticate to the API server using auto-generated bootstrap tokens and node certificates. All inter-component communication is encrypted by default.
 
 ### Limitations for edge
 
