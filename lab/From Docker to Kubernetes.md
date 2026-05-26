@@ -219,7 +219,7 @@ spec:
   ports:
     - port: 5432
       targetPort: 5432
-  type: ClusterIP        # internal only — never expose a database externally
+  type: ClusterIP        # internal only, never expose a database externally
 ```
 
 **Deployment vs StatefulSet for databases**: this example uses a `Deployment` for simplicity (one replica, single PVC). For production PostgreSQL, especially with replication, use a `StatefulSet`, which assigns a stable network identity and a dedicated PVC to each replica. For a single-instance dev database, `Deployment` + PVC is acceptable.
@@ -369,7 +369,7 @@ kubectl port-forward service/echo 5000:5000
 curl http://localhost:5000
 ```
 
-`kubectl port-forward` is the easiest way to access a service locally during development. It creates a direct tunnel between your machine and the Pod — no need to expose a NodePort or configure an Ingress.
+`kubectl port-forward` is the easiest way to access a service locally during development. It creates a direct tunnel between your machine and the Pod so there's no need to expose a NodePort or configure an Ingress.
 
 ---
 
