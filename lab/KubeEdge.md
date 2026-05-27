@@ -330,7 +330,7 @@ sudo ctr -n k8s.io containers ls
 curl http://10.244.0.5:80
 # <!DOCTYPE html>... nginx responds normally
 
-# EdgeCore logs show the disconnection  and continued operation
+# EdgeCore logs show the disconnection and continued operation
 sudo journalctl -u edgecore --since "5 minutes ago" | grep -i "connect\|offline\|disconnect"
 # ... connection to cloud lost
 # ... running in offline mode
