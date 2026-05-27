@@ -409,7 +409,7 @@ These three labs cover the full lifecycle of a KubeEdge deployment: setup, workl
 
 ---
 
-## Bonus: Prometheus + Grafana Monitoring
+## Prometheus + Grafana Monitoring
 
 **Objective**: install Prometheus and Grafana on the cloud node to monitor cluster metrics.
 
