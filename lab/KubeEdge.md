@@ -93,10 +93,7 @@ keadm version   # should print v1.15.0
 CloudCore is the KubeEdge cloud component. It manages communication with all edge nodes.
 
 ```bash
-keadm init \
-  --advertise-address=<CLOUD-NODE-IP> \
-  --kube-config=$HOME/.kube/config \
-  --kubeedge-version=v1.15.0
+keadm init --advertise-address=<CLOUD-NODE-IP> --kube-config=$HOME/.kube/config --kubeedge-version=v1.15.0
 
 # This command:
 # 1. Downloads and installs the KubeEdge CRDs (Device, DeviceModel, etc.)
