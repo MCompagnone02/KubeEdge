@@ -392,8 +392,6 @@ These three labs cover the full lifecycle of a KubeEdge deployment: setup, workl
 
 ---
 
----
-
 ## Troubleshooting Reference
 
 | Symptom | Likely cause | Fix |
@@ -408,3 +406,90 @@ These three labs cover the full lifecycle of a KubeEdge deployment: setup, workl
 | `keadm join` fails with "certificate verification" | Time drift between VMs | Sync clocks: `sudo timedatectl set-ntp true` on both VMs |
 | Pod shows `Unknown` status from cloud | Expected during outage | Correct behavior; status resolves when connectivity is restored |
 | EdgeCore service not starting after reboot | Service not enabled | Run `sudo systemctl enable edgecore` |
+
+---
+
+## Bonus: Prometheus + Grafana Monitoring
+
+**Objective**: install Prometheus and Grafana on the cloud node to monitor cluster metrics.
+
+### Install Helm
+
+```bash
+# Run on: cloud-node
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+```
+
+### Install Prometheus
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring \
+  --create-namespace \
+  --set alertmanager.enabled=false \
+  --set prometheus-pushgateway.enabled=false \
+  --set kube-state-metrics.enabled=false \
+  --set nodeExporter.enabled=false \
+  --set server.nodeSelector."kubernetes\.io/hostname"=cloud-node
+
+# Wait for the server to be 2/2 Running
+kubectl get pods -n monitoring -w
+```
+
+### Install Grafana
+
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+helm install grafana grafana/grafana \
+  --namespace monitoring \
+  --set nodeSelector."kubernetes\.io/hostname"=cloud-node \
+  --set persistence.enabled=false \
+  --set resources.requests.memory=128Mi \
+  --set resources.limits.memory=256Mi
+
+# Wait for Running
+kubectl get pods -n monitoring -w
+```
+
+### Access Prometheus
+
+```bash
+# Run on: cloud-node
+kubectl port-forward -n monitoring svc/prometheus-server 9090:80 --address 0.0.0.0
+```
+
+Open in browser: `http://<CLOUD-NODE-IP>:9090`
+
+Useful queries:
+- `up` — all monitored targets
+- `node_memory_MemAvailable_bytes` — available RAM per node
+- `rate(node_cpu_seconds_total{mode="idle"}[1m])` — CPU usage
+- `100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)` — memory usage %
+
+### Access Grafana
+
+```bash
+# Get the admin password
+kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+# Run on: cloud-node (new terminal)
+kubectl port-forward -n monitoring svc/grafana 3000:80 --address 0.0.0.0
+```
+
+Open in browser: `http://<CLOUD-NODE-IP>:3000` — login with `admin` and the password above.
+
+**Add Prometheus as data source:**
+1. Connections → Data sources → Add data source → Prometheus
+2. URL: `http://prometheus-server.monitoring.svc.cluster.local`
+3. Save & test
+
+**Import Node Exporter Full dashboard:**
+1. Dashboards → New → Import
+2. Enter `1860` → Load
+3. Select the Prometheus data source → Import
