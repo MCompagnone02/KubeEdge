@@ -1,6 +1,13 @@
 # KubeEdge Lab Commands
 ---
 
+```bash
+multipass shell cloud-node # to enter cloud-node
+multipass shell edge-node # to enter edge-node
+```
+
+---
+
 ## 1. Show the cluster is working (cloud-node)
 
 ```bash
@@ -46,7 +53,9 @@ watch kubectl get nodes
 
 ```bash
 kubectl get pods -o wide
-# nginx-edge-xxxxx   Unknown   edge-node   ← cloud cannot verify edge state
+# nginx-edge-xxxxx   Running/Unknown   edge-node
+# STATUS: Unknown or Running (depends on K3s/KubeEdge version)
+# Either way, the cloud CANNOT verify the actual edge state
 ```
 
 ---
