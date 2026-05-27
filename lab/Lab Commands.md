@@ -110,10 +110,10 @@ kubectl port-forward -n monitoring svc/prometheus-server 9090:80 --address 0.0.0
 
 Open in browser: `http://172.26.41.55:9090`
 
-Useful queries to show:
-- `up` — all monitored targets
-- `node_memory_MemAvailable_bytes` — available RAM per node
-- `100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)` — memory usage %
+Useful queries:
+- `up`: all monitored targets
+- `node_memory_MemAvailable_bytes`: available RAM per node
+- `100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)`: memory usage %
 
 ---
 
