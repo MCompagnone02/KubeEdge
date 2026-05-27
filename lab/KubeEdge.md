@@ -142,6 +142,8 @@ cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
 EOF
 
 # 4. Disable SystemdCgroup (incompatible with this version of containerd)
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
 sudo sed -i 's/SystemdCgroup = true/SystemdCgroup = false/' /etc/containerd/config.toml
 sudo systemctl restart containerd
 
