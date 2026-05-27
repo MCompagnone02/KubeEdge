@@ -56,9 +56,9 @@ After the fix, configure kubectl:
 
 ```bash
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-mkdir -p ~/.kube
-sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-sudo chown $(id -u):$(id -g) ~/.kube/config
+mkdir -p $HOME/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 # Verify
 kubectl get nodes
