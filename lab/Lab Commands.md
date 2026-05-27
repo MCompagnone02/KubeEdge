@@ -100,3 +100,39 @@ watch kubectl get nodes
 ```
 
 ---
+
+## 9. Show Prometheus metrics (cloud-node)
+
+```bash
+# Start port-forward (if not already running)
+kubectl port-forward -n monitoring svc/prometheus-server 9090:80 --address 0.0.0.0
+```
+
+Open in browser: `http://172.26.41.55:9090`
+
+Useful queries to show:
+- `up` — all monitored targets
+- `node_memory_MemAvailable_bytes` — available RAM per node
+- `100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)` — memory usage %
+
+---
+
+## 10. Show Grafana dashboard (cloud-node)
+
+```bash
+# Start port-forward (if not already running, new terminal)
+kubectl port-forward -n monitoring svc/grafana 3000:80 --address 0.0.0.0
+```
+
+Open in browser: `http://172.26.41.55:3000`
+
+- Login: `admin` / (retrieve password with command below if needed)
+- Show the **Node Exporter Full** dashboard (CPU, RAM, disk, network per node)
+- During Lab 3 outage: edge-node metrics disappear → reappear on reconnect
+
+```bash
+# Retrieve Grafana admin password if needed
+kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+
+---
