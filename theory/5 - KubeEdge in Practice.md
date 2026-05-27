@@ -96,8 +96,6 @@ During normal operation, the system maintains a continuous synchronization loop 
 ```
 kubectl apply  →  API server (etcd)  →  EdgeController
                                               ↓
-                                          CloudCore
-                                              ↓ (Web Socket/QUIC)
                                            EdgeHub
                                               ↓
                              ┌────────────────┴───────────────────┐
@@ -109,8 +107,6 @@ kubectl apply  →  API server (etcd)  →  EdgeController
                              └─────────────── status ────────────┘
                                               ↓
                                             EdgeHub
-                                              ↓ (Web Socket/QUIC)
-                                           CloudCore
                                               ↓
                                          EdgeController
                                               ↓
