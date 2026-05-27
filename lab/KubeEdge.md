@@ -152,6 +152,7 @@ wget https://github.com/kubeedge/kubeedge/releases/download/v1.15.0/keadm-v1.15.
 tar -zxf keadm-v1.15.0-linux-amd64.tar.gz
 sudo cp keadm-v1.15.0-linux-amd64/keadm/keadm /usr/local/bin/keadm
 sudo chmod +x /usr/local/bin/keadm
+keadm version
 ```
 
 Now join the edge node to the cluster:
