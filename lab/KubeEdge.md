@@ -467,10 +467,10 @@ kubectl port-forward -n monitoring svc/prometheus-server 9090:80 --address 0.0.0
 Open in browser: `http://<CLOUD-NODE-IP>:9090`
 
 Useful queries:
-- `up` — all monitored targets
-- `node_memory_MemAvailable_bytes` — available RAM per node
-- `rate(node_cpu_seconds_total{mode="idle"}[1m])` — CPU usage
-- `100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)` — memory usage %
+- `up`: all monitored targets
+- `node_memory_MemAvailable_bytes`: available RAM per node
+- `rate(node_cpu_seconds_total{mode="idle"}[1m])`: CPU usage
+- `100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)`: memory usage %
 
 ### Access Grafana
 
@@ -482,7 +482,7 @@ kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-pass
 kubectl port-forward -n monitoring svc/grafana 3000:80 --address 0.0.0.0
 ```
 
-Open in browser: `http://<CLOUD-NODE-IP>:3000` — login with `admin` and the password above.
+Open in browser: `http://<CLOUD-NODE-IP>:3000`: login with `admin` and the password above.
 
 **Add Prometheus as data source:**
 1. Connections → Data sources → Add data source → Prometheus
