@@ -1,10 +1,22 @@
 # KubeEdge Lab Commands
 ---
 
+## Quick start (if VMs were suspended)
+
+```powershell
+# PowerShell
+multipass start cloud-node
+multipass start edge-node
+multipass list
+```
+
 ```bash
 multipass shell cloud-node # to enter cloud-node
 multipass shell edge-node # to enter edge-node
 ```
+
+If edge-node stays NotReady after restart, wait 30 seconds.
+If it still doesn't reconnect: `sudo systemctl restart edgecore` on edge-node.
 
 ---
 
@@ -88,16 +100,3 @@ watch kubectl get nodes
 ```
 
 ---
-
-## Quick start (if VMs were suspended)
-
-```powershell
-# PowerShell
-multipass start cloud-node
-multipass start edge-node
-multipass list
-```
-
-
-If edge-node stays NotReady after restart, wait 30 seconds.
-If it still doesn't reconnect: `sudo systemctl restart edgecore` on edge-node.
