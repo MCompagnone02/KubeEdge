@@ -1,7 +1,4 @@
-# KubeEdge — Exam Commands
-
-Follow this order during the presentation.
-
+# KubeEdge Lab Commands
 ---
 
 ## 1. Show the cluster is working (cloud-node)
@@ -92,5 +89,6 @@ multipass start edge-node
 multipass list
 ```
 
-> If edge-node stays NotReady after restart, wait 30 seconds.
-> If it still doesn't reconnect: `sudo systemctl restart edgecore` on edge-node.
+
+If edge-node stays NotReady after restart, wait 30 seconds.
+If it still doesn't reconnect: `sudo systemctl restart edgecore` on edge-node.
