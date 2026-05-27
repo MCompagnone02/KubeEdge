@@ -6,7 +6,7 @@ KubeEdge is an open-source project hosted by the CNCF (Cloud Native Computing Fo
 
 Its architecture is built around a clear separation between three layers:
 
-- **Cloud layer**: the standard Kubernetes control plane;
+- **Cloud layer**: the standard Kubernetes control plane augmented by CloudCore;
 - **Edge layer**: lightweight edge nodes running EdgeCore (replaces kubelet);
 - **Device layer**: physical IoT devices communicating over MQTT;
 
