@@ -158,10 +158,7 @@ keadm version
 Now join the edge node to the cluster:
 
 ```bash
-sudo keadm join \
-  --cloudcore-ipport=<CLOUD-NODE-IP>:10000 \
-  --token=<TOKEN-FROM-STEP-1.3> \
-  --kubeedge-version=v1.15.0
+sudo keadm join --cloudcore-ipport=<CLOUD-NODE-IP>:10000 --token=<TOKEN-FROM-STEP-1.3> --kubeedge-version=v1.15.0
 
 # Expected output:
 # KubeEdge edgecore is running, For logs visit: journalctl -u edgecore.service -xe
