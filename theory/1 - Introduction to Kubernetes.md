@@ -14,7 +14,7 @@ Understanding why Kubernetes exists requires a look at how software deployment h
 
 2. **Virtual machines (VMs)**: Hypervisors (VMware, KVM) allowed multiple isolated OS instances on a single machine improving utilization. The problem with VMs is that they are heavy: each one runs a full OS kernel;
 
-3. **Containers**: Docker popularized Linux containers: lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network;
+3. **Containers**: Docker popularized Linux containers: they package the application code, its dependencies, and the files needed to run it, ensuring that it runs the same way in any environment. They are lightweight, fast-starting, and portable. A container shares the host OS kernel but isolates the application's filesystem, processes, and network;
 
 4. **Container orchestration**: this is the problem that Kubernetes solves, because running hundreds of containers across multiple machines, with load balancing, health checks, and rolling updates;
 
