@@ -101,7 +101,7 @@ CloudCore and EdgeCore communicate over a **WebSocket** tunnel (with **QUIC** as
 
 Two critical design decisions:
 
-1. **Firewall-friendly**: the edge node *initiates* the outbound connection to CloudCore. No inbound ports need to be open on the edge side: this is crucial when edge nodes are behind NAT or corporate firewalls;
+1. **Firewall-friendly**: the edge node initiates the outbound connection to CloudCore. No inbound ports need to be open on the edge side: this is crucial when edge nodes are behind NAT or corporate firewalls;
 
 2. **Resilient to disconnection**: the tunnel reconnects automatically after network outages. Messages are queued locally (in MetaManager and EdgeHub) to avoid data loss during interruptions;
 
