@@ -103,6 +103,8 @@ watch kubectl get nodes
 
 ## 9. Show Prometheus metrics (cloud-node)
 
+Open a new terminal, execute `multipass shell cloud-node`, then:
+
 ```bash
 # Start port-forward (if not already running)
 kubectl port-forward -n monitoring svc/prometheus-server 9090:80 --address 0.0.0.0
@@ -118,6 +120,8 @@ Useful queries:
 ---
 
 ## 10. Show Grafana dashboard (cloud-node)
+
+Open a new terminal, execute `multipass shell cloud-node`, then:
 
 ```bash
 # Start port-forward (if not already running, new terminal)
