@@ -15,9 +15,6 @@ multipass shell cloud-node # to enter cloud-node
 multipass shell edge-node # to enter edge-node
 ```
 
-If edge-node stays NotReady after restart, wait 30 seconds.
-If it still doesn't reconnect: `sudo systemctl restart edgecore` on edge-node.
-
 ---
 
 ## 1. Show the cluster is working (cloud-node)
@@ -27,6 +24,9 @@ kubectl get nodes
 # cloud-node   Ready   control-plane
 # edge-node    Ready   agent,edge
 ```
+
+If edge-node stays NotReady after restart, wait 30 seconds.
+If it still doesn't reconnect: `sudo systemctl restart edgecore` on edge-node.
 
 ---
 
