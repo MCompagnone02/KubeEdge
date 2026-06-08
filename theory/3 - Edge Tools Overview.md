@@ -162,16 +162,16 @@ Workloads can be distributed to specific NodePools, enabling topology-aware depl
 
 | Feature | K3s | MicroK8s | OpenYurt | KubeEdge |
 |---------|-----|----------|----------|----------|
-| Lightweight footprint | ✓ | ✓ | — | ✓ |
+| Lightweight footprint | ✓ | ✓ | - | ✓ |
 | Full K8s API compatibility | ✓ | ✓ | ✓ | ✓ |
-| Offline node autonomy | — | — | ✓ | ✓ |
-| Native IoT device management | — | — | — | ✓ |
+| Offline node autonomy | - | - | ✓ | ✓ |
+| Native IoT device management | - | - | - | ✓ |
 | ARM support | ✓ | ✓ | ✓ | ✓ |
-| MQTT / device protocol support | — | — | — | ✓ |
-| Easy installation | ✓ | ✓ | — | — |
-| Multi-node edge management | — | ✓ | ✓ | ✓ |
-| Non-invasive (no K8s fork) | ✓ | ✓ | ✓ | — |
-| Node grouping / topology | — | — | ✓ | ✓ |
+| MQTT / device protocol support | - | - | - | ✓ |
+| Easy installation | ✓ | ✓ | - | - |
+| Multi-node edge management | - | ✓ | ✓ | ✓ |
+| Non-invasive (no K8s fork) | ✓ | ✓ | ✓ | - |
+| Node grouping / topology | - | - | ✓ | ✓ |
 
 ### Key takeaways
 
