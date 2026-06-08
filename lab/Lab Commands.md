@@ -15,6 +15,8 @@ multipass shell cloud-node # to enter cloud-node
 multipass shell edge-node # to enter edge-node
 ```
 
+Always check if IP addresses have changed!
+
 ---
 
 ## 1. Show the cluster is working (cloud-node)
