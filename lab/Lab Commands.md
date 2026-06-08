@@ -76,9 +76,9 @@ kubectl get pods -o wide
 
 ```bash
 sudo ctr -n k8s.io containers ls
-# nginx:1.25-alpine   Running   ← still alive!
+# nginx:1.25-alpine   Running   ← still alive! # Check here for IP address
 
-curl http://10.244.0.4:80
+curl http://10.244.0.8:80
 # <!DOCTYPE html>... nginx responds normally
 ```
 
